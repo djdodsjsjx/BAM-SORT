@@ -143,7 +143,7 @@ visualizations
 results/
 error_log.txt
 dance_detections/
-datasets/
+/datasets/
 results_log/
 videos/
 traj_plots/
