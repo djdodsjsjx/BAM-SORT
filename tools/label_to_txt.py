@@ -3,8 +3,8 @@ import json
 import glob
 import numpy as np
 
-DATA_PATH = 'datasets/myset_fire_person/train/json'  # json文件夹
-OUT_PATH = 'datasets/myset_fire_person/train/gt'
+DATA_PATH = 'datasets/myset/train/json'  # json文件夹
+OUT_PATH = 'datasets/myset/train/gt'
 
 if __name__ == '__main__':
     labelme_json = glob.glob('{}/*.json'.format(DATA_PATH))

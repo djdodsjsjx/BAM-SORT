@@ -30,7 +30,7 @@ class Exp(MyExp):
         self.basic_lr_per_img = 0.001 / 64.0
         self.warmup_epochs = 1
 
-        self.dataset_type = "myset_fire_person"
+        self.dataset_type = "myset"
     def get_data_loader(self, batch_size, is_distributed, no_aug=False):
         from yolox.data import (
             MOTDataset,

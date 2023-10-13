@@ -9,7 +9,7 @@ import time
 import cv2
 import torch
 import sys
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/OC_SORT/')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 from loguru import logger
 
 from yolox.data.data_augment import preproc
@@ -142,7 +142,7 @@ class Predictor(object):  # 检测
 
 
 class ColorImage:
-    def __init__(self, device_index=0):
+    def __init__(self, device_index):
         self.cap = cv2.VideoCapture(device_index)
         
     def __iter__(self) -> Iterator:
@@ -199,10 +199,90 @@ class DistanceFilter:
         self.average = sum(self.distance_window) / len(self.distance_window)
         return self.average
 
+# def imageflow_demo(predictor, vis_folder, current_time, args):
+#     # cap = cv2.VideoCapture(args.path if args.demo_type == "video" else args.camid)
+#     color_image = ColorImage()
+#     depth_image = DepthImage()
+#     width = color_image.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
+#     height = color_image.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
+#     fps = color_image.get(cv2.CAP_PROP_FPS)
+#     timestamp = time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
+#     save_folder = osp.join(vis_folder, timestamp)
+#     os.makedirs(save_folder, exist_ok=True)
+#     if args.demo_type == "video":
+#         save_path = args.out_path
+#     else:
+#         save_path = osp.join(save_folder, "camera.mp4")
+#     logger.info(f"video save_path is {save_path}")
+
+#     vid_writer = cv2.VideoWriter(
+#         save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
+#     )
+#     # tracker = OCSort(det_thresh=args.track_thresh, iou_threshold=args.iou_thresh, use_byte=args.use_byte)
+#     tracker = SparseTracker(args)
+#     timer_det, timer_track = Timer(), Timer()
+#     frame_id = 0
+#     results = []
+#     df = DistanceFilter(10)
+#     for color_frame, depth_frame in zip(color_image, depth_image):
+#         if frame_id % 20 == 0:
+#             logger.info('frame: {:d} det: {:.2f} ms, track: {:.2f} ms'.format(frame_id, timer_det.average_time * 1000, timer_track.average_time * 1000))  # timer.average_time
+#         outputs, img_info = predictor.inference(color_frame, timer_det)
+#         # timer_det.toc()
+#         # result_frame = predictor.visual(outputs[0], img_info, predictor.confthre)
+#         if outputs[0] is not None:
+#             timer_track.tic()
+#             online_targets = tracker.update(outputs[0], [img_info['height'], img_info['width']], exp.test_size)
+#             online_tlwhs = []
+#             online_ids = []
+#             for t in online_targets:
+#                 tlwh = [t[0], t[1], t[2] - t[0], t[3] - t[1]]
+#                 tid = t[4]
+#                 vertical = tlwh[2] / tlwh[3] > args.aspect_ratio_thresh
+#                 if tlwh[2] * tlwh[3] > args.min_box_area and not vertical:
+#                     online_tlwhs.append(tlwh)
+#                     online_ids.append(tid)
+#                     results.append(
+#                         f"{frame_id},{tid},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},1.0,-1,-1,-1\n"
+#                     )
+#             timer_track.toc()
+
+
+#             # 获取距离
+#             distance = -1
+#             if len(online_tlwhs) > 0:
+#                 x1, y1, w, h = online_tlwhs[0]
+#                 cx, cy = int(x1 + w // 2), int(y1 + h // 2)
+#                 distance = depth_image.getdistance(cx, cy)
+            
+#             distance = df.update(distance)
+
+#             online_im = plot_tracking(
+#                 img_info['raw_img'], online_tlwhs, online_ids, frame_id=frame_id + 1, fps=1. / (timer_det.average_time + timer_track.average_time), distance=distance
+#             )
+#             # logger.info("fps: %.2f" %(1. / timer.average_time))
+#         else:
+#             # timer.toc()
+#             online_im = img_info['raw_img']
+#         if args.save_result:
+#             # vid_writer_notrack.write(result_frame)
+#             vid_writer.write(online_im)
+#             cv2.imshow("frame", online_im)
+#             cv2.imshow("Depth Image", depth_frame)
+#         ch = cv2.waitKey(1)
+#         if ch == 27 or ch == ord("q") or ch == ord("Q"):
+#             break
+#         frame_id += 1
+
+#     if args.save_result:
+#         res_file = osp.join(vis_folder, f"{timestamp}.txt")
+#         with open(res_file, 'w') as f:
+#             f.writelines(results)
+#         logger.info(f"save results to {res_file}")
+
+
 def imageflow_demo(predictor, vis_folder, current_time, args):
-    # cap = cv2.VideoCapture(args.path if args.demo_type == "video" else args.camid)
-    color_image = ColorImage()
-    depth_image = DepthImage()
+    color_image = ColorImage(args.path if args.demo_type == "video" else args.camid)
     width = color_image.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
     height = color_image.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     fps = color_image.get(cv2.CAP_PROP_FPS)
@@ -222,8 +302,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
     timer_det, timer_track = Timer(), Timer()
     frame_id = 0
     results = []
-    df = DistanceFilter(10)
-    for color_frame, depth_frame in zip(color_image, depth_image):
+    for color_frame in color_image:
         if frame_id % 20 == 0:
             logger.info('frame: {:d} det: {:.2f} ms, track: {:.2f} ms'.format(frame_id, timer_det.average_time * 1000, timer_track.average_time * 1000))  # timer.average_time
         outputs, img_info = predictor.inference(color_frame, timer_det)
@@ -234,6 +313,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
             online_targets = tracker.update(outputs[0], [img_info['height'], img_info['width']], exp.test_size)
             online_tlwhs = []
             online_ids = []
+
             for t in online_targets:
                 tlwh = [t[0], t[1], t[2] - t[0], t[3] - t[1]]
                 tid = t[4]
@@ -246,18 +326,8 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                     )
             timer_track.toc()
 
-
-            # 获取距离
-            distance = -1
-            if len(online_tlwhs) > 0:
-                x1, y1, w, h = online_tlwhs[0]
-                cx, cy = int(x1 + w // 2), int(y1 + h // 2)
-                distance = depth_image.getdistance(cx, cy)
-            
-            distance = df.update(distance)
-
             online_im = plot_tracking(
-                img_info['raw_img'], online_tlwhs, online_ids, frame_id=frame_id + 1, fps=1. / (timer_det.average_time + timer_track.average_time), distance=distance
+                img_info['raw_img'], online_tlwhs, online_ids, frame_id=frame_id + 1, fps=1. / (timer_det.average_time + timer_track.average_time), distance=0
             )
             # logger.info("fps: %.2f" %(1. / timer.average_time))
         else:
@@ -267,7 +337,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
             # vid_writer_notrack.write(result_frame)
             vid_writer.write(online_im)
             cv2.imshow("frame", online_im)
-            cv2.imshow("Depth Image", depth_frame)
+            # cv2.imshow("Depth Image", depth_frame)
         ch = cv2.waitKey(1)
         if ch == 27 or ch == ord("q") or ch == ord("Q"):
             break

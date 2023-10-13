@@ -3,7 +3,7 @@ import torch
 import cv2
 import os
 
-from .reid_model import Extractor
+from .reid_model_motdt import load_reid_model, extract_reid_features
 from trackers.deepsort_tracker import kalman_filter, linear_assignment, iou_matching
 from yolox.data.dataloading import get_yolox_datadir
 from .detection import Detection
@@ -23,7 +23,7 @@ def _nn_cosine_distance(x, y):
 
 
 class Tracker:
-    def __init__(self, metric, max_iou_distance=0.7, max_age=70, n_init=3):
+    def __init__(self, metric, max_iou_distance=0.7, max_age=70, n_init=3, args=None):
         self.metric = metric
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
@@ -32,6 +32,7 @@ class Tracker:
         self.kf = kalman_filter.KalmanFilter()
         self.tracks = []
         self._next_id = 1
+        self.args = args
 
     def predict(self):
         """Propagate track state distributions one time step forward.
@@ -100,7 +101,7 @@ class Tracker:
         matches_a, unmatched_tracks_a, unmatched_detections = \
             linear_assignment.matching_cascade(
                 gated_metric, self.metric.matching_threshold, self.max_age,
-                self.tracks, detections, confirmed_tracks)
+                self.tracks, detections, confirmed_tracks, args=self.args)
 
         # Associate remaining tracks together with unconfirmed tracks using IOU.
         iou_track_candidates = unconfirmed_tracks + [
@@ -109,10 +110,16 @@ class Tracker:
         unmatched_tracks_a = [
             k for k in unmatched_tracks_a if
             self.tracks[k].time_since_update != 1]
-        matches_b, unmatched_tracks_b, unmatched_detections = \
-            linear_assignment.min_cost_matching(
-                iou_matching.iou_cost, self.max_iou_distance, self.tracks,
-                detections, iou_track_candidates, unmatched_detections)
+        if self.args.asso=='hmiou':
+            matches_b, unmatched_tracks_b, unmatched_detections = \
+                linear_assignment.min_cost_matching(
+                    iou_matching.hmiou_cost, self.args.match_thresh, self.tracks,
+                    detections, iou_track_candidates, unmatched_detections, args=self.args, sort_with_bec=False)
+        else:
+            matches_b, unmatched_tracks_b, unmatched_detections = \
+                linear_assignment.min_cost_matching(
+                    iou_matching.iou_cost, self.max_iou_distance, self.tracks,
+                    detections, iou_track_candidates, unmatched_detections, args=self.args, sort_with_bec=False)
 
         matches = matches_a + matches_b
         unmatched_tracks = list(set(unmatched_tracks_a + unmatched_tracks_b))
@@ -153,31 +160,39 @@ class NearestNeighborDistanceMetric(object):
 
 
 class DeepSort(object):
-    def __init__(self, model_path, max_dist=0.1, min_confidence=0.3, nms_max_overlap=1.0, max_iou_distance=0.7, max_age=30, n_init=3, nn_budget=100, use_cuda=True):
+    def __init__(self, model_path, max_dist=0.1, min_confidence=0.3, nms_max_overlap=1.0, max_iou_distance=0.7, max_age=30, n_init=3, nn_budget=100, use_cuda=True, args=None):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap
 
-        self.extractor = Extractor(model_path, use_cuda=use_cuda)
+        # self.extractor = Extractor(model_path, use_cuda=use_cuda)
+        self.reid_model = load_reid_model(model_path)
 
         max_cosine_distance = max_dist
         metric = NearestNeighborDistanceMetric(
             "cosine", max_cosine_distance, nn_budget)
         self.tracker = Tracker(
-            metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
+            metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init, args=args)
+        self.args = args
 
-    def update(self, output_results, img_info, img_size, img_file_name):
-        img_file_name = os.path.join(get_yolox_datadir(), 'mot', 'train', img_file_name)
-        ori_img = cv2.imread(img_file_name)
-        self.height, self.width = ori_img.shape[:2]
-        # post process detections
-        output_results = output_results.cpu().numpy()
-        confidences = output_results[:, 4] * output_results[:, 5]
+    # def update(self, output_results, img_info, img_size, img_file_name):
+    def update(self, ori_img, bboxes):
+        # if self.args.dataset == 'mot17':
+        #     img_file_name = os.path.join(get_yolox_datadir(), 'mot', 'train', img_file_name)
+        # else:
+        #     img_file_name = os.path.join(get_yolox_datadir(), 'dancetrack', 'val', img_file_name)
+        # ori_img = cv2.imread(img_file_name)
+        # self.height, self.width = ori_img.shape[:2]
+        # # post process detections
+        # output_results = output_results.cpu().numpy()
+        # confidences = output_results[:, 4] * output_results[:, 5]
         
-        bboxes = output_results[:, :4]  # x1y1x2y2
-        img_h, img_w = img_info[0], img_info[1]
-        scale = min(img_size[0] / float(img_h), img_size[1] / float(img_w))
-        bboxes /= scale
-        bbox_xyxy = bboxes
+        # bboxes = output_results[:, :4]  # x1y1x2y2
+        # img_h, img_w = img_info[0], img_info[1]
+        # scale = min(img_size[0] / float(img_h), img_size[1] / float(img_w))
+        # bboxes /= scale
+        self.height, self.width = ori_img.shape[:2]
+        confidences = bboxes[:,4]
+        bbox_xyxy = bboxes[:,:4]
         bbox_tlwh = self._xyxy_to_tlwh_array(bbox_xyxy)
         remain_inds = confidences > self.min_confidence
         bbox_tlwh = bbox_tlwh[remain_inds]
@@ -283,13 +298,18 @@ class DeepSort(object):
         return t, l, w, h
 
     def _get_features(self, bbox_xywh, ori_img):
-        im_crops = []
+        # im_crops = []
+        tlbrs = []
         for box in bbox_xywh:
             x1, y1, x2, y2 = self._tlwh_to_xyxy(box)
-            im = ori_img[y1:y2, x1:x2]
-            im_crops.append(im)
-        if im_crops:
-            features = self.extractor(im_crops)
-        else:
-            features = np.array([])
+            tlbrs.append(np.array([x1, y1, x2, y2], dtype=bbox_xywh.dtype))
+        tlbrs = np.stack(tlbrs, axis=0)
+        #     im = ori_img[y1:y2, x1:x2]
+        #     im_crops.append(im)
+        # if im_crops:
+        #     features = self.extractor(im_crops)
+        # else:
+        #     features = np.array([])
+        features = extract_reid_features(self.reid_model, ori_img, tlbrs)
+        features = features.cpu().numpy()
         return features

@@ -7,10 +7,41 @@ from trackers.deepsort_tracker import kalman_filter
 
 INFTY_COST = 1e+5
 
+def bec_score(dets, trks, det_idxes, trk_idxes, dnum_keep=3):
+    def keep_min_elements(matrix, dnum_keep=3):  # 保留三个轨迹的d，用于比较
+        if dnum_keep >= matrix.shape[1]:
+            return matrix
+        sorted_indices = np.argsort(matrix, axis=1)
+        mask = np.zeros_like(matrix, dtype=bool)
+        
+        for i in range(matrix.shape[0]):
+            mask[i, sorted_indices[i, :dnum_keep]] = True
+        
+        result = np.where(mask, matrix, 0)
+        return result
+    if (len(dets)==0) or (len(trks) == 0):
+        return 0
+    bboxes1 = np.array([dets[i].to_tlbr() for i in det_idxes])
+    bboxes2 = np.array([trks[i].to_tlbr() for i in trk_idxes])
+    if (bboxes1.shape[0] == 0) or (bboxes2.shape[0] == 0):
+        return 0
+    bboxes2 = np.expand_dims(bboxes2, 0)  # 1*t*k
+    bboxes1 = np.expand_dims(bboxes1, 1)  # d*1*k
+    d_diff = np.abs(bboxes1[..., 3] - bboxes2[..., 3])
+    d_diff_min_row = np.min(d_diff, axis=1)
+    d_diff -= d_diff_min_row[:, np.newaxis]
+    d_diff_filter_data = keep_min_elements(d_diff, dnum_keep)
+    row_sums_filter = np.sum(d_diff_filter_data, axis=1)
+    row_sums_filter[row_sums_filter == 0] = 1  # inf
+    d_diff /= row_sums_filter[:, np.newaxis]
+    d_diff = 1. - d_diff
+    d_diff[d_diff < 0] = 0
+
+    return d_diff.T
 
 def min_cost_matching(
         distance_metric, max_distance, tracks, detections, track_indices=None,
-        detection_indices=None):
+        detection_indices=None, args=None, sort_with_bec=False):
     """Solve linear assignment problem.
     Parameters
     ----------
@@ -41,6 +72,7 @@ def min_cost_matching(
         * A list of unmatched track indices.
         * A list of unmatched detection indices.
     """
+
     if track_indices is None:
         track_indices = np.arange(len(tracks))
     if detection_indices is None:
@@ -52,8 +84,14 @@ def min_cost_matching(
     cost_matrix = distance_metric(
         tracks, detections, track_indices, detection_indices)
     cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
+    
+    bec_matrix = None
+    if args.sort_with_bec:
+        bec_matrix = bec_score(detections, tracks, detection_indices, track_indices, args.bec_num)
+    else:
+        bec_matrix = 0
 
-    row_indices, col_indices = linear_assignment(cost_matrix)
+    row_indices, col_indices = linear_assignment(cost_matrix-bec_matrix*args.w_bec)
 
     matches, unmatched_tracks, unmatched_detections = [], [], []
     for col, detection_idx in enumerate(detection_indices):
@@ -75,7 +113,7 @@ def min_cost_matching(
 
 def matching_cascade(
         distance_metric, max_distance, cascade_depth, tracks, detections,
-        track_indices=None, detection_indices=None):
+        track_indices=None, detection_indices=None, args=None):
     """Run matching cascade.
     Parameters
     ----------
@@ -116,6 +154,7 @@ def matching_cascade(
 
     unmatched_detections = detection_indices
     matches = []
+    sort_with_bec = args.sort_with_bec
     for level in range(cascade_depth):
         if len(unmatched_detections) == 0:  # No detections left
             break
@@ -130,7 +169,8 @@ def matching_cascade(
         matches_l, _, unmatched_detections = \
             min_cost_matching(
                 distance_metric, max_distance, tracks, detections,
-                track_indices_l, unmatched_detections)
+                track_indices_l, unmatched_detections, args=args, sort_with_bec=sort_with_bec)
+        sort_with_bec = False
         matches += matches_l
     unmatched_tracks = list(set(track_indices) - set(k for k, _ in matches))
     return matches, unmatched_tracks, unmatched_detections

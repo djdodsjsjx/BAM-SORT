@@ -10,11 +10,12 @@ import torchvision
 
 from trackers.motdt_tracker import matching
 from .kalman_filter import KalmanFilter
+
 from .reid_model import load_reid_model, extract_reid_features
 from yolox.data.dataloading import get_yolox_datadir
 
 from .basetrack import BaseTrack, TrackState
-
+from .matching import *
 
 class STrack(BaseTrack):
 
@@ -182,7 +183,7 @@ class STrack(BaseTrack):
 
 class OnlineTracker(object):
 
-    def __init__(self, model_folder, min_cls_score=0.4, min_ap_dist=0.8, max_time_lost=30, use_tracking=True, use_refind=True):
+    def __init__(self, model_folder, min_cls_score=0.4, min_ap_dist=0.8, max_time_lost=30, use_tracking=True, use_refind=True, args=None):
 
         self.min_cls_score = min_cls_score
         self.min_ap_dist = min_ap_dist
@@ -200,19 +201,26 @@ class OnlineTracker(object):
         self.reid_model = load_reid_model(model_folder)
 
         self.frame_id = 0
+        self.args = args
 
-    def update(self, output_results, img_info, img_size, img_file_name):
-        img_file_name = os.path.join(get_yolox_datadir(), 'mot', 'train', img_file_name)
-        image = cv2.imread(img_file_name)
-        # post process detections
-        output_results = output_results.cpu().numpy()
-        confidences = output_results[:, 4] * output_results[:, 5]
+    # def update(self, output_results, img_info, img_size, img_file_name):
+    def update(self, image, bboxes):
+        # if self.args.dataset == 'mot17':
+        #     img_file_name = os.path.join(get_yolox_datadir(), 'mot', 'train', img_file_name)
+        # else:
+        #     img_file_name = os.path.join(get_yolox_datadir(), 'dancetrack', 'val', img_file_name)
+        # image = cv2.imread(img_file_name)
+        # # post process detections
+        # output_results = output_results.cpu().numpy()
+        # confidences = output_results[:, 4] * output_results[:, 5]
         
-        bboxes = output_results[:, :4]  # x1y1x2y2
-        img_h, img_w = img_info[0], img_info[1]
-        scale = min(img_size[0] / float(img_h), img_size[1] / float(img_w))
-        bboxes /= scale
-        bbox_xyxy = bboxes
+        # bboxes = output_results[:, :4]  # x1y1x2y2
+        # img_h, img_w = img_info[0], img_info[1]
+        # scale = min(img_size[0] / float(img_h), img_size[1] / float(img_w))
+        # bboxes /= scale
+
+        confidences = bboxes[:,4]
+        bbox_xyxy = bboxes[:,:4]
         tlwhs = self._xyxy_to_tlwh_array(bbox_xyxy)
         remain_inds = confidences > self.min_cls_score
         tlwhs = tlwhs[remain_inds]
@@ -277,6 +285,14 @@ class OnlineTracker(object):
 
         dists = matching.nearest_reid_distance(tracked_stracks, detections, metric='euclidean')
         dists = matching.gate_cost_matrix(self.kalman_filter, dists, tracked_stracks, detections)
+
+        bec_matrix = None
+        if self.args.sort_with_bec:
+            bec_matrix = bec_score(detections, tracked_stracks, self.args.bec_num)
+        else:
+            bec_matrix = 0
+        dists += -bec_matrix*self.args.w_bec
+
         matches, u_track, u_detection = matching.linear_assignment(dists, thresh=self.min_ap_dist)
         for itracked, idet in matches:
             tracked_stracks[itracked].update(detections[idet], self.frame_id, image)
@@ -297,8 +313,14 @@ class OnlineTracker(object):
         len_det = len(u_detection)
         detections = [detections[i] for i in u_detection] + pred_dets
         r_tracked_stracks = [tracked_stracks[i] for i in u_track]
-        dists = matching.iou_distance(r_tracked_stracks, detections)
-        matches, u_track, u_detection = matching.linear_assignment(dists, thresh=0.5)
+        if self.args.asso=='hmiou':
+            dists = matching.hmiou_distance(r_tracked_stracks, detections)
+            matches, u_track, u_detection = matching.linear_assignment(dists, thresh=self.args.iou_thresh)
+        else:
+            dists = matching.iou_distance(r_tracked_stracks, detections)
+            matches, u_track, u_detection = matching.linear_assignment(dists, thresh=0.5)
+            # print("no use hgiou!")
+
         for itracked, idet in matches:
             r_tracked_stracks[itracked].update(detections[idet], self.frame_id, image, update_feature=True)
         for it in u_track:
@@ -308,8 +330,15 @@ class OnlineTracker(object):
 
         # unconfirmed
         detections = [detections[i] for i in u_detection if i < len_det]
-        dists = matching.iou_distance(unconfirmed, detections)
-        matches, u_unconfirmed, u_detection = matching.linear_assignment(dists, thresh=0.7)
+
+
+        if self.args.asso=='hmiou':
+            dists = matching.hmiou_distance(unconfirmed, detections)
+            matches, u_unconfirmed, u_detection = matching.linear_assignment(dists, thresh=(self.args.iou_thresh+0.2))
+        else:
+            dists = matching.iou_distance(unconfirmed, detections)
+            matches, u_unconfirmed, u_detection = matching.linear_assignment(dists, thresh=0.7)
+
         for itracked, idet in matches:
             unconfirmed[itracked].update(detections[idet], self.frame_id, image, update_feature=True)
         for it in u_unconfirmed:

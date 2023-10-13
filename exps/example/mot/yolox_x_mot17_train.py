@@ -16,7 +16,7 @@ class Exp(MyExp):
         self.width = 1.25
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
         self.train_ann = "train.json"
-        self.val_ann = "train.json"
+        self.val_ann = "train_half.json"
         self.input_size = (800, 1440)
         self.test_size = (800, 1440)
         self.random_size = (18, 32)
@@ -29,7 +29,8 @@ class Exp(MyExp):
         self.basic_lr_per_img = 0.001 / 64.0
         self.warmup_epochs = 1
 
-        self.dataset_type = "MOT17"  # 数据集类型
+        self.dataset = "MOT17"
+        self.dataset_type = "train_half"  # 数据集类型
     def get_data_loader(self, batch_size, is_distributed, no_aug=False):
         from yolox.data import (
             MOTDataset,
@@ -41,7 +42,7 @@ class Exp(MyExp):
         )
 
         dataset = MOTDataset(
-            data_dir=os.path.join(get_yolox_datadir(), self.dataset_type),
+            data_dir=os.path.join(get_yolox_datadir(), self.dataset),
             json_file=self.train_ann,
             name='train',
             img_size=self.input_size,
@@ -96,7 +97,7 @@ class Exp(MyExp):
         from yolox.data import MOTDataset, ValTransform
 
         valdataset = MOTDataset(
-            data_dir=os.path.join(get_yolox_datadir(), self.dataset_type),
+            data_dir=os.path.join(get_yolox_datadir(), self.dataset),
             json_file=self.val_ann,
             img_size=self.test_size,
             name='train',

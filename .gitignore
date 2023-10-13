@@ -148,3 +148,10 @@ results_log/
 videos/
 traj_plots/
 trackeval/
+external/
+cache/
+exps/kitti/test/
+exps/MOT17/
+exps/MOT20/yolox_x
+exps/reid/
+tracker_num/

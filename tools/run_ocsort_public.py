@@ -21,12 +21,12 @@ import time
 
 import sys
 sys.path.append('./')
-from trackers.ocsort_tracker.ocsort import OCSort
+from trackers.myocsort_tracker.ocsort3 import OCSort
 from utils.args import make_parser
 import os
 import motmetrics as mm
 import numpy as np
-
+from pathlib import Path
 
 """
     BDD has not been supported yet. 
@@ -82,6 +82,30 @@ BDD_test_seqs = ['b1c66a42-6f7d68ca', 'b1c81faa-3df17267', 'b1c81faa-c80764c5', 
     'b251064f-4696b75e', 'b251064f-5f6b663e', 'b251064f-8d92db81', 'b251064f-e7a165fd', 
     'b251b746-00138418', 'b255cd6c-0bdf0ac7', 'b255cd6c-2f889586', 'b255cd6c-5ccba454']
 
+def increment_path(path, exist_ok=False, sep='', mkdir=False):
+    # Increment file or directory path, i.e. runs/exp --> runs/exp{sep}2, runs/exp{sep}3, ... etc.
+    path = Path(path)  # os-agnostic
+    if path.exists() and not exist_ok:
+        path, suffix = (path.with_suffix(''), path.suffix) if path.is_file() else (path, '')
+
+        # Method 1
+        for n in range(2, 9999):
+            p = f'{path}{sep}{n}{suffix}'  # increment path
+            if not os.path.exists(p):  #
+                break
+        path = Path(p)
+
+        # Method 2 (deprecated)
+        # dirs = glob.glob(f"{path}{sep}*")  # similar paths
+        # matches = [re.search(rf"{path.stem}{sep}(\d+)", d) for d in dirs]
+        # i = [int(m.groups()[0]) for m in matches if m]  # indices
+        # n = max(i) + 1 if i else 2  # increment number
+        # path = Path(f"{path}{sep}{n}{suffix}")  # increment path
+
+    if mkdir:
+        path.mkdir(parents=True, exist_ok=True)  # make directory
+
+    return path
 
 def compare_dataframes(gts, ts):
     accs = []
@@ -100,14 +124,16 @@ def compare_dataframes(gts, ts):
 @logger.catch
 def main(args):
     results_folder = args.out_path
-    raw_path = args.raw_results_path
+    results_folder = str(increment_path(results_folder, exist_ok=False))  # 对已有的文件进行评估，需要注释
     os.makedirs(results_folder, exist_ok=True)
-
+    raw_path = "{}/{}/{}".format(args.raw_results_path, args.dataset, args.dataset_type)  # 检测路径
     dataset = args.dataset
+
 
     total_time = 0 
     total_frame = 0 
 
+    
     if dataset == "kitti":
         test_seqs = ["%04d" % i for i in range(29)]
         cats = ['Pedestrian', 'Car', 'Cyclist', "Van", "Truck"]
@@ -127,8 +153,9 @@ def main(args):
 
     for seq_name in test_seqs:
         print("starting seq {}".format(seq_name))
-        tracker = OCSort(args.track_thresh, iou_threshold=args.iou_thresh, delta_t=args.deltat, 
-            asso_func=args.asso, inertia=args.inertia)
+        # tracker = OCSort(args.track_thresh, iou_threshold=args.iou_thresh, delta_t=args.deltat, 
+        #     asso_func=args.asso, inertia=args.inertia)
+        tracker = OCSort(args=args, det_thresh = args.track_thresh, iou_threshold=args.iou_thresh, asso_func=args.asso, delta_t=args.deltat, inertia=args.inertia, use_byte=args.use_byte)
         if dataset in ["kitti", "bdd"]:
             seq_trks = np.empty((0, 18))
         elif dataset == "headtrack":
@@ -140,7 +167,7 @@ def main(args):
         lines = seq_file.readlines()
         line_count = 0 
         for line in lines:
-            print("{}/{}".format(line_count,len(lines)))
+            # print("{}/{}".format(line_count,len(lines)))
             line_count+=1
             line = line.strip()
             if dataset in ["kitti", "bdd"]:
@@ -154,7 +181,7 @@ def main(args):
         min_frame = seq_trks[:,0].min()
         max_frame = seq_trks[:,0].max()
         for frame_ind in range(int(min_frame), int(max_frame)+1):
-            print("{}:{}/{}".format(seq_name, frame_ind, max_frame))
+            # print("{}:{}/{}".format(seq_name, frame_ind, max_frame))
             if dataset in ["kitti", "bdd"]:
                 dets = seq_trks[np.where(seq_trks[:,0]==frame_ind)][:,6:10]
                 cates = seq_trks[np.where(seq_trks[:,0]==frame_ind)][:,2]
@@ -202,7 +229,7 @@ def main(args):
                         boxes[trk][3]-boxes[trk][1], 1)
                 out_file.write(out_line)
 
-    print("Running over {} frames takes {}s. FPS={}".format(total_frame, total_time, total_frame / total_time))
+    # print("Running over {} frames takes {}s. FPS={}".format(total_frame, total_time, total_frame / total_time))
     return 
 
 

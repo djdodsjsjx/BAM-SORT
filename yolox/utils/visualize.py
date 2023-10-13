@@ -41,6 +41,38 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
     return img
 
+def vis_notag(img, boxes, scores, frame_id):
+    cv2.putText(img, 'frame: %d' % (frame_id),
+                (0, int(15)), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), thickness=2)
+    for i in range(len(boxes)):
+        box = boxes[i]
+        score = scores[i]
+
+        x0 = int(box[0])
+        y0 = int(box[1])
+        x1 = int(box[2])
+        y1 = int(box[3])
+
+        color = (_COLORS[0] * 255).astype(np.uint8).tolist()
+        text = '{:.1f}%'.format(score * 100)
+        txt_color = (0, 0, 0) if np.mean(_COLORS[0]) > 0.5 else (255, 255, 255)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+
+        txt_size = cv2.getTextSize(text, font, 0.4, 1)[0]
+        cv2.rectangle(img, (x0, y0), (x1, y1), color, 2)
+
+        txt_bk_color = (_COLORS[0] * 255 * 0.7).astype(np.uint8).tolist()
+        cv2.rectangle(
+            img,
+            (x0, y0 + 1),
+            (x0 + txt_size[0] + 1, y0 + int(1.5*txt_size[1])),
+            txt_bk_color,
+            -1
+        )
+        cv2.putText(img, text, (x0, y0 + txt_size[1]), font, 0.4, txt_color, thickness=1)
+
+    return img
+
 
 def get_color(idx):
     idx = idx * 3
@@ -69,13 +101,15 @@ def plot_tracking(image, tlwhs, obj_ids, scores=None, frame_id=0, fps=0., distan
                 (0, int(30 * text_scale)), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), thickness=2)
     for i, tlwh in enumerate(tlwhs):
         x1, y1, w, h = tlwh
+        cx, cy = min(int(x1 + w // 2), im_w), min(int(y1 + h // 2), im_h)
         intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
-        logger.info("cx: %d, cy: %d" %(x1 + w // 2, y1 + h // 2))
+        # logger.info("cx: %d, cy: %d" %(cx, cy))
         obj_id = int(obj_ids[i])
-        id_text = '{}'.format(int(obj_id))
+        id_text = '{}-{:.2f}'.format(int(obj_id), float(scores[i]))
         if ids2 is not None:
             id_text = id_text + ', {}'.format(int(ids2[i]))
         color = get_color(abs(obj_id))
+        cv2.circle(im, (cx, cy), 5, (0, 0, 255), -1)
         cv2.rectangle(im, intbox[0:2], intbox[2:4], color=color, thickness=line_thickness)
         cv2.putText(im, id_text, (intbox[0], intbox[1]), cv2.FONT_HERSHEY_PLAIN, text_scale, (0, 0, 255),
                     thickness=text_thickness)

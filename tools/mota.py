@@ -1,6 +1,6 @@
 from loguru import logger
 import sys
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/OC_SORT/')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 import torch
 import torch.backends.cudnn as cudnn
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -36,20 +36,20 @@ def eval(results_folder, gt_root, gt_type):
 
     # gt_type = '_val_half'
     #gt_type = ''
-    print('gt_type', gt_type)
+    # print('gt_type', gt_type)
     gtfiles = glob.glob(
         os.path.join(gt_root, '*/gt/gt{}.txt'.format(gt_type)))
-    print('gt_files', gtfiles)
-    tsfiles = [f for f in glob.glob(os.path.join(results_folder, '*.txt')) if not os.path.basename(f).startswith('eval')]
-
+    # gtfiles = gtfiles[0:1]
+    # print('gt_files', gtfiles)
+    tsfiles = [f for f in glob.glob(os.path.join(results_folder, '*.txt')) if not os.path.basename(f).startswith('eval') and "detections" not in f]
+    # tsfiles = tsfiles[0:1]
     logger.info('Found {} groundtruths and {} test files.'.format(len(gtfiles), len(tsfiles)))
     logger.info('Available LAP solvers {}'.format(mm.lap.available_solvers))
     logger.info('Default LAP solver \'{}\''.format(mm.lap.default_solver))
     logger.info('Loading files.')
 
     gt = OrderedDict([(Path(f).parts[-3], mm.io.loadtxt(f, fmt='mot15-2D', min_confidence=1)) for f in gtfiles])
-    ts = OrderedDict([(os.path.splitext(Path(f).parts[-1])[0], mm.io.loadtxt(f, fmt='mot15-2D', min_confidence=-1.0)) for f in tsfiles if "detections" not in f])    
-
+    ts = OrderedDict([(os.path.splitext(Path(f).parts[-1])[0], mm.io.loadtxt(f, fmt='mot15-2D', min_confidence=-1.0)) for f in tsfiles])    
     mh = mm.metrics.create()    
     accs, names = compare_dataframes(gt, ts)
 
@@ -80,8 +80,68 @@ def eval(results_folder, gt_root, gt_type):
     logger.info('\n' + mm.io.render_summary(summary, formatters=mh.formatters, namemap=mm.io.motchallenge_metric_names))
     logger.info('Completed')
 
+def eval_hota(results_folder, dataset, dataset_type):
+    if dataset == "dancetrack":
+        # python TrackEval/scripts/run_mot_challenge.py --BENCHMARK dancetrack --SPLIT_TO_EVAL val --TRACKERS_TO_EVAL '' --METRICS HOTA CLEAR Identity --TIME_PROGRESS False --TRACKER_SUB_FOLDER '' --GT_FOLDER datasets/dancetrack/ --USE_PARALLEL False --NUM_PARALLEL_CORES 8 --TRACKERS_FOLDER evaldata/trackers/DanceTrack/improve/val/baseline+bec+act --GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt
+        hota_command = "python TrackEval/scripts/run_mot_challenge.py " \
+                       f"--BENCHMARK dancetrack " \
+                       f"--SPLIT_TO_EVAL {dataset_type}  " \
+                       "--METRICS HOTA CLEAR Identity " \
+                       "--TRACKERS_TO_EVAL eval " \
+                       "--TIME_PROGRESS False " \
+                       "--TRACKER_SUB_FOLDER ''  " \
+                       "--USE_PARALLEL False " \
+                       "--NUM_PARALLEL_CORES 8 " \
+                       "--GT_FOLDER datasets/dancetrack/ " \
+                       "--TRACKERS_FOLDER " + results_folder + " "\
+                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+    elif dataset == "MOT17":
+        # python TrackEval/scripts/run_mot_challenge.py --BENCHMARK MOT17 --SPLIT_TO_EVAL train --TRACKERS_TO_EVAL '' --METRICS HOTA CLEAR Identity VACE --TIME_PROGRESS False --GT_FOLDER datasets/MOT17/ --USE_PARALLEL False --NUM_PARALLEL_CORES 1 --TRACKERS_FOLDER evaldata/trackers/MOT17/improve/val-half/baseline+bec+act+new --GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_val_half.txt
+        hota_command = "python TrackEval/scripts/run_mot_challenge.py " \
+                       "--BENCHMARK MOT17 " \
+                       "--SPLIT_TO_EVAL train " \
+                       "--TRACKERS_TO_EVAL eval " \
+                       "--METRICS HOTA CLEAR Identity VACE " \
+                       "--TIME_PROGRESS False " \
+                       "--TRACKER_SUB_FOLDER ''  " \
+                       "--USE_PARALLEL False " \
+                       "--NUM_PARALLEL_CORES 1  " \
+                       "--GT_FOLDER datasets/MOT17/ " \
+                       "--TRACKERS_FOLDER " + results_folder + " " \
+                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type) if dataset_type == "val" else "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+                    #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type)
+    elif dataset == "MOT20":
+        # python TrackEval/scripts/run_mot_challenge.py --BENCHMARK MOT20 --SPLIT_TO_EVAL train --TRACKERS_TO_EVAL '' --METRICS HOTA CLEAR Identity VACE --TIME_PROGRESS False --GT_FOLDER datasets/MOT20/ --USE_PARALLEL False --NUM_PARALLEL_CORES 1 --TRACKERS_FOLDER evaldata/trackers/MOT20/improve/val-half/baseline+bec+act --GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_val_half.txt
+        hota_command = "python TrackEval/scripts/run_mot_challenge.py " \
+                       "--BENCHMARK MOT20 " \
+                       "--SPLIT_TO_EVAL train " \
+                       "--TRACKERS_TO_EVAL eval " \
+                       "--METRICS HOTA CLEAR Identity VACE " \
+                       "--TRACKER_SUB_FOLDER ''  " \
+                       "--TIME_PROGRESS False " \
+                       "--USE_PARALLEL False " \
+                       "--NUM_PARALLEL_CORES 1  " \
+                       "--GT_FOLDER datasets/MOT20/ " \
+                       "--TRACKERS_FOLDER " + results_folder + " " \
+                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type) if dataset_type == "val" else "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+                    #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type)
+    else:
+        assert dataset in ["dancetrack", "MOT17", "MOT20"]
+    os.system(hota_command)
+
+    logger.info('Completed')
+    # print("Running over {} frames takes {}s. FPS={}".format(total_frame, total_time, total_frame / total_time))
+    return 
+
+
 if __name__ == '__main__':
-    results_folder = 'evaldata/trackers/mot_challenge/MOT17-train/yolox_x_mot17_train_GPR_results2'  # 需要评估的轨迹路径
-    gt_root = "datasets/MOT17/train"
-    gt_type = ''  # '_train_half', '_val_half', ''
-    eval(results_folder, gt_root, gt_type)
+
+    # results_folder = 'evaldata/trackers/DanceTrack/improve/train/baseline'  # 需要评估的轨迹路径
+    # gt_root = "datasets/dancetrack/train"
+    # gt_type = ''  # '_train_half', '_val_half', ''
+    # eval(results_folder, gt_root, gt_type)
+
+    dataset_type = "val"
+    dataset = "MOT20"
+    results_folder = "evaldata/trackers/{}/improve/val-half/baseline+bec+atm+std".format(dataset)
+    eval_hota(results_folder, dataset, dataset_type)

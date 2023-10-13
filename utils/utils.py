@@ -6,6 +6,32 @@ import torch
 from torchvision.ops.boxes import box_area
 from loguru import logger
 
+def write_det_results(filename, results):
+    save_format = '{frame},-1,{x1},{y1},{x2},{y2},{s},-1,-1,-1\n'
+    with open(filename, 'w') as f:
+        for frame_id, tlwhs, scores in results:
+            for tlwh, score in zip(tlwhs, scores):
+                x1, y1, x2, y2 = tlwh
+                line = save_format.format(frame=frame_id, x1=round(x1, 1), y1=round(y1, 1), x2=round(x2, 1), y2=round(y2, 1), s=round(score, 2))
+                f.write(line)
+    logger.info('save results to {}'.format(filename))
+
+def write_det_reid_results(filename, results):
+    save_format = '{frame},-1,{x1},{y1},{x2},{y2},{s},-1,-1,-1'
+    with open(filename, 'a') as f:
+        for frame_id, tlwhs, scores, embs in results:
+            for tlwh, score, emb in zip(tlwhs, scores, embs):
+                x1, y1, x2, y2 = tlwh
+                line = save_format.format(frame=frame_id, x1=round(x1, 1), y1=round(y1, 1), x2=round(x2, 1), y2=round(y2, 1), s=round(score, 2))
+                # Add a comma to separate the line and the vector
+                line += ','
+                f.write(line)
+                
+                # Append the 2048-length vector to the line
+                np.savetxt(f, np.array(emb).reshape(1, -1), fmt='%f', delimiter=',')
+                
+    logger.info('save results to {}'.format(filename))
+
 def write_results(filename, results):
     save_format = '{frame},{id},{x1},{y1},{w},{h},{s},-1,-1,-1\n'
     with open(filename, 'w') as f:

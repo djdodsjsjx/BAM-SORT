@@ -15,8 +15,7 @@ class Exp(MyExp):
         self.depth = 0.33
         self.width = 0.25
         self.scale = (0.5, 1.5)
-        self.dataset_type = "myset_fire_person"  # 数据集: MOT20 || MOT17
-        # self.dataset_type = "myset_walk"
+        self.dataset_type = "myset"  # 数据集: MOT20 || MOT17
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
         self.train_ann = "train.json"
         self.val_ann = "train.json"
@@ -51,7 +50,7 @@ class Exp(MyExp):
         self.model.head.initialize_biases(1e-2)
         return self.model
 
-    def get_data_loader(self, batch_size, is_distributed, no_aug=False): 
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False):
         from yolox.data import (
             MOTDataset,
             TrainTransform,

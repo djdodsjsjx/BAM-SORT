@@ -4,6 +4,6 @@
 
 from .coco_evaluator import COCOEvaluator
 from .mot_evaluator import MOTEvaluator
-from .mot_evaluator_dance import MOTEvaluator as MOTEvaluatorDance
+from .mot_evaluator_dance2 import MOTEvaluator as MOTEvaluatorDance
 from .mot_evaluator_public import MOTEvaluatorPublic
 

@@ -1,6 +1,6 @@
 from loguru import logger
 import sys
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/OC_SORT/')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 import torch
 import torch.backends.cudnn as cudnn
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -11,6 +11,8 @@ from yolox.utils import configure_nccl, fuse_model, get_local_rank, get_model_in
 from yolox.evaluators import MOTEvaluatorDance as MOTEvaluator
 
 from utils.args import make_parser
+from tools.mota import eval
+
 import os
 import random
 import warnings
@@ -76,7 +78,9 @@ def main(exp, args, num_gpu):
     cudnn.benchmark = True
     rank = args.local_rank
 
-    result_dir = "{}_{}_results2".format(args.expn, exp.eval_mode)
+    
+
+    result_dir = "{}_{}_results".format(args.expn, exp.eval_mode)
     file_name = os.path.join(exp.output_dir, result_dir)  # evaldata/trackers/DanceTracker/yolox_x_dancetrack_val
     file_name = str(increment_path(file_name, exist_ok=False))  # 对已有的文件进行评估，需要注释
     if rank == 0:
@@ -149,54 +153,16 @@ def main(exp, args, num_gpu):
     *_, summary = evaluator.evaluate_ocsort(
             model, is_distributed, args.fp16, trt_file, decoder, exp.test_size, results_folder
     )
+    # *_, summary = evaluator.evaluate_hybird_sort_reid(
+    #         args, model, is_distributed, args.fp16, trt_file, decoder, exp.test_size, results_folder
+    # )
     # if we evaluate on validation set, 
     logger.info("\n" + summary)
 
     if args.test:
         # we skip evaluation for inference on test set
         return 
-
-    # evaluate on the validation set  跟踪器评估
-    mm.lap.default_solver = 'lap'
-    gtfiles = glob.glob(os.path.join('datasets/dancetrack/%s' %(exp.eval_mode), '*/gt/gt.txt'))
-    print('gt_files', gtfiles)
-    tsfiles = [f for f in glob.glob(os.path.join(results_folder, '*.txt')) if not os.path.basename(f).startswith('eval')]
-
-    logger.info('Found {} groundtruths and {} test files.'.format(len(gtfiles), len(tsfiles)))
-    logger.info('Available LAP solvers {}'.format(mm.lap.available_solvers))
-    logger.info('Default LAP solver \'{}\''.format(mm.lap.default_solver))
-    logger.info('Loading files.')
-    
-    gt = OrderedDict([(Path(f).parts[-3], mm.io.loadtxt(f, fmt='mot15-2D', min_confidence=1)) for f in gtfiles])  # 字典: {文件名: 文件内容}
-    ts = OrderedDict([(os.path.splitext(Path(f).parts[-1])[0], mm.io.loadtxt(f, fmt='mot15-2D', min_confidence=-1)) for f in tsfiles])    
-    
-    mh = mm.metrics.create()  # 初始化
-    accs, names = compare_dataframes(gt, ts)  # 每一个视频(names)对应的多目标跟踪指标(accs)
-    
-    logger.info('Running metrics')
-    metrics = ['recall', 'precision', 'num_unique_objects', 'mostly_tracked',
-               'partially_tracked', 'mostly_lost', 'num_false_positives', 'num_misses',
-               'num_switches', 'num_fragmentations', 'mota', 'motp', 'num_objects']
-    summary = mh.compute_many(accs, names=names, metrics=metrics, generate_overall=True)
-    div_dict = {
-        'num_objects': ['num_false_positives', 'num_misses', 'num_switches', 'num_fragmentations'],
-        'num_unique_objects': ['mostly_tracked', 'partially_tracked', 'mostly_lost']}
-    for divisor in div_dict:
-        for divided in div_dict[divisor]:
-            summary[divided] = (summary[divided] / summary[divisor])
-    fmt = mh.formatters
-    change_fmt_list = ['num_false_positives', 'num_misses', 'num_switches', 'num_fragmentations', 'mostly_tracked',
-                       'partially_tracked', 'mostly_lost']
-    for k in change_fmt_list:
-        fmt[k] = fmt['mota']
-    # print(mm.io.render_summary(summary, formatters=fmt, namemap=mm.io.motchallenge_metric_names))
-    logger.info("\n" + mm.io.render_summary(summary, formatters=fmt, namemap=mm.io.motchallenge_metric_names))
-
-    metrics = mm.metrics.motchallenge_metrics + ['num_objects']
-    summary = mh.compute_many(accs, names=names, metrics=metrics, generate_overall=True)
-    # print(mm.io.render_summary(summary, formatters=mh.formatters, namemap=mm.io.motchallenge_metric_names))
-    logger.info("\n" + mm.io.render_summary(summary, formatters=mh.formatters, namemap=mm.io.motchallenge_metric_names))
-    logger.info('Completed')
+    eval(results_folder, f"datasets/{exp.dataset}/val", "")  # evaluate MOTA
 
 
 if __name__ == "__main__":
@@ -204,6 +170,7 @@ if __name__ == "__main__":
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
     exp.output_dir = args.output_dir
+    args.dataset_type = exp.dataset_type
     if not args.expn:
         args.expn = exp.exp_name
 

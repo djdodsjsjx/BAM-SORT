@@ -33,6 +33,8 @@ class Exp(MyExp):
         self.basic_lr_per_img = 0.001 / 64.0
         self.warmup_epochs = 1
         
+        self.dataset_type = "train"
+        self.dataset = "dancetrackT"
     def get_data_loader(self, batch_size, is_distributed, no_aug=False):
         from yolox.data import (
             MOTDataset,
@@ -44,7 +46,7 @@ class Exp(MyExp):
         )
 
         dataset = MOTDataset(
-            data_dir=os.path.join(get_yolox_datadir(), "dancetrack"),
+            data_dir=os.path.join(get_yolox_datadir(), self.dataset),
             json_file=self.train_ann,
             name='train',
             img_size=self.input_size,
@@ -100,7 +102,7 @@ class Exp(MyExp):
         
         if testdev:
             valdataset = MOTDataset(
-                data_dir=os.path.join(get_yolox_datadir(), "dancetrack"),
+                data_dir=os.path.join(get_yolox_datadir(), self.dataset),
                 json_file=self.test_ann,
                 img_size=self.test_size,
                 name=self.eval_mode,
@@ -111,7 +113,7 @@ class Exp(MyExp):
             )
         else:
             valdataset = MOTDataset(
-                data_dir=os.path.join(get_yolox_datadir(), "dancetrack"),
+                data_dir=os.path.join(get_yolox_datadir(), self.dataset),
                 json_file=self.val_ann,
                 img_size=self.test_size,
                 name=self.eval_mode,

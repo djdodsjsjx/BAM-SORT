@@ -5,10 +5,10 @@ import cv2
 
 
 # Use the same script for MOT16
-DATA_PATH = 'datasets/myset_fire_person'
+DATA_PATH = 'datasets/myset'
 # DATA_PATH = 'datasets/myset_walk'
 OUT_PATH = os.path.join(DATA_PATH, 'annotations')
-pic_type = 'png'
+pic_type = 'jpg'
 SPLITS = ['train']  # --> split training data to train_half and val_half.
 HALF_VIDEO = True
 CREATE_SPLITTED_ANN = True
@@ -32,7 +32,7 @@ if __name__ == '__main__':
             'categories': [
                 {
                     'id': 1,
-                    'name': 'pedestrain'
+                    'name': 'person'
                 }
             ]
         }
@@ -57,12 +57,14 @@ if __name__ == '__main__':
 
         if split != 'test':
             anns = np.loadtxt(ann_path, dtype=np.float32, delimiter=',')
+            ann_cnt = 0
             for i in range(anns.shape[0]):
+                ann_cnt += 1
                 frame_id = int(anns[i][0])
                 track_id = int(anns[i][1])
                 cat_id = int(anns[i][7])
                 category_id = 1
-                ann = {'id': 1,
+                ann = {'id': ann_cnt,
                         'category_id': category_id,
                         'image_id': frame_id,
                         'track_id': track_id,

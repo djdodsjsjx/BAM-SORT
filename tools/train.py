@@ -1,6 +1,6 @@
 from loguru import logger
 import sys
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/OC_SORT/')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 import torch
 import torch.backends.cudnn as cudnn
 
@@ -11,10 +11,9 @@ import argparse
 import random
 import warnings
 
-
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX train parser")
-    parser.add_argument("-expn", "--experiment-name", type=str, default="yolox_nano_motmyset_fireperson")  # 训练文件夹名称
+    parser.add_argument("-expn", "--experiment-name", type=str, default="yolox_nano_myset")  # 训练文件夹名称
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
     # distributed
@@ -44,7 +43,7 @@ def make_parser():
     parser.add_argument(  # 是否继续训练
         "--resume", default=False, action="store_true", help="resume training"
     )
-    parser.add_argument("-c", "--ckpt", default="pretrained/yolox_nano.pth", type=str, help="checkpoint file")  # 上一次训练文件
+    parser.add_argument("-c", "--ckpt", default="pretrained/yolox_nano_myset.pth.tar", type=str, help="checkpoint file")  # 预训练文件
     parser.add_argument(
         "-e",
         "--start_epoch",

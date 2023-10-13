@@ -69,6 +69,39 @@ def ious(atlbrs, btlbrs):
 
     return ious
 
+def hmiou(bboxes1, bboxes2):
+    """
+    :param bbox_p: predict of bbox(N,4)(x1,y1,x2,y2)
+    :param bbox_g: groundtruth of bbox(N,4)(x1,y1,x2,y2)
+    :return:
+    """
+    # for details should go to https://arxiv.org/pdf/1902.09630.pdf
+    # ensure predict's bbox form
+    ious = np.zeros((len(bboxes1), len(bboxes2)), dtype=np.float)
+    if ious.size == 0:
+        return ious
+    bboxes2 = np.expand_dims(bboxes2, 0)
+    bboxes1 = np.expand_dims(bboxes1, 1)
+
+    yy11 = np.maximum(bboxes1[..., 1], bboxes2[..., 1])
+    yy12 = np.minimum(bboxes1[..., 3], bboxes2[..., 3])
+
+    yy21 = np.minimum(bboxes1[..., 1], bboxes2[..., 1])
+    yy22 = np.maximum(bboxes1[..., 3], bboxes2[..., 3])
+    o = (yy12 - yy11) / (yy22 - yy21)
+
+    xx1 = np.maximum(bboxes1[..., 0], bboxes2[..., 0])
+    yy1 = np.maximum(bboxes1[..., 1], bboxes2[..., 1])
+    xx2 = np.minimum(bboxes1[..., 2], bboxes2[..., 2])
+    yy2 = np.minimum(bboxes1[..., 3], bboxes2[..., 3])
+    w = np.maximum(0., xx2 - xx1)
+    h = np.maximum(0., yy2 - yy1)
+    wh = w * h
+    iou = wh / ((bboxes1[..., 2] - bboxes1[..., 0]) * (bboxes1[..., 3] - bboxes1[..., 1])
+                + (bboxes2[..., 2] - bboxes2[..., 0]) * (bboxes2[..., 3] - bboxes2[..., 1]) - wh)
+
+    iou *= o
+    return iou
 
 def iou_distance(atracks, btracks):
     """
@@ -86,6 +119,49 @@ def iou_distance(atracks, btracks):
         atlbrs = [track.tlbr for track in atracks]
         btlbrs = [track.tlbr for track in btracks]
     _ious = ious(atlbrs, btlbrs)
+    cost_matrix = 1 - _ious
+
+    return cost_matrix
+
+def bec_score(dets, trks, dnum_keep=3):
+    def keep_min_elements(matrix, dnum_keep=3):  # 保留三个轨迹的d，用于比较
+        if dnum_keep >= matrix.shape[1]:
+            return matrix
+        sorted_indices = np.argsort(matrix, axis=1)
+        mask = np.zeros_like(matrix, dtype=bool)
+        
+        for i in range(matrix.shape[0]):
+            mask[i, sorted_indices[i, :dnum_keep]] = True
+        
+        result = np.where(mask, matrix, 0)
+        return result
+    if (len(dets)==0) or (len(trks) == 0):
+        return 0
+    bboxes1 = np.array([det.tlbr for det in dets])
+    bboxes2 = np.array([track.tlbr for track in trks])
+    bboxes2 = np.expand_dims(bboxes2, 0)  # 1*t*k
+    bboxes1 = np.expand_dims(bboxes1, 1)  # d*1*k
+    d_diff = np.abs(bboxes1[..., 3] - bboxes2[..., 3])
+    d_diff_min_row = np.min(d_diff, axis=1)
+    d_diff -= d_diff_min_row[:, np.newaxis]
+    d_diff_filter_data = keep_min_elements(d_diff, dnum_keep)
+    row_sums_filter = np.sum(d_diff_filter_data, axis=1)
+    row_sums_filter[row_sums_filter == 0] = 1  # inf
+    d_diff /= row_sums_filter[:, np.newaxis]
+    d_diff = 1. - d_diff
+    d_diff[d_diff < 0] = 0
+
+    return d_diff.T
+def hmiou_distance(atracks, btracks):
+    """
+    Compute cost based on IoU
+    :type atracks: list[STrack]
+    :type btracks: list[STrack]
+    :rtype cost_matrix np.ndarray
+    """
+    atlbrs = [track.tlbr for track in atracks]
+    btlbrs = [track.tlbr for track in btracks]
+    _ious = hmiou(atlbrs, btlbrs)
     cost_matrix = 1 - _ious
 
     return cost_matrix
@@ -179,3 +255,22 @@ def fuse_score(cost_matrix, detections):
     fuse_sim = iou_sim * det_scores
     fuse_cost = 1 - fuse_sim
     return fuse_cost
+
+
+def add_score_kalman(cost_matrix, strack_pool, detections, interval=1.0, track_thresh=0.6):
+    if cost_matrix.size == 0:
+        return cost_matrix
+    strack_score = np.array([np.clip(strack.score_kalman, track_thresh, 1.0) for strack in strack_pool])
+    det_score = np.array([det.score for det in detections])
+    cost_matrix += (abs(np.expand_dims(strack_score, axis=1).repeat(cost_matrix.shape[1], axis=1) - det_score) * interval)
+    return cost_matrix
+
+def add_score_kalman_byte_step(cost_matrix, strack_pool, detections, interval=1.0, track_thresh=0.6):
+    if cost_matrix.size == 0:
+        return cost_matrix
+    # strack_score = np.array([np.clip(strack.score_kalman, 0.1, track_thresh) for strack in strack_pool])
+    strack_score = np.array([np.clip(strack.score - (strack.pre_score - strack.score), 0.1, track_thresh) for strack in strack_pool])
+    # det_score = np.array([np.clip(det.score - (det.pre_score - det.score), 0.1, track_thresh) for det in detections])
+    det_score = np.array([det.score for det in detections])
+    cost_matrix += (abs(np.expand_dims(strack_score, axis=1).repeat(cost_matrix.shape[1], axis=1) - det_score) * interval)
+    return cost_matrix
