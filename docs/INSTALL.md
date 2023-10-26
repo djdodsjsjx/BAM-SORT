@@ -1,8 +1,8 @@
 ## Installation
-OC-SORT is built upon codebase of [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) and [ByteTrack](https://github.com/ifzhang/ByteTrack). I tested the code with Python 3.8. 
+BAM-SORT is built upon codebase of [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) and [ByteTrack](https://github.com/ifzhang/ByteTrack). I tested the code with Python 3.8. 
 
 ### 1. Installing on the host machine
-Step1. Install OC-SORT
+Step1. Install BAM-SORT
 ```shell
 git clone https://github.com/noahcao/OC_SORT.git
 cd OC_SORT

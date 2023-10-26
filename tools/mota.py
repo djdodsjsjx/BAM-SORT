@@ -108,8 +108,8 @@ def eval_hota(results_folder, dataset, dataset_type):
                        "--NUM_PARALLEL_CORES 1  " \
                        "--GT_FOLDER datasets/MOT17/ " \
                        "--TRACKERS_FOLDER " + results_folder + " " \
-                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type) if dataset_type == "val" else "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
-                    #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type)
+                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type)
+                    #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type) if dataset_type == "val" else "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
     elif dataset == "MOT20":
         # python TrackEval/scripts/run_mot_challenge.py --BENCHMARK MOT20 --SPLIT_TO_EVAL train --TRACKERS_TO_EVAL '' --METRICS HOTA CLEAR Identity VACE --TIME_PROGRESS False --GT_FOLDER datasets/MOT20/ --USE_PARALLEL False --NUM_PARALLEL_CORES 1 --TRACKERS_FOLDER evaldata/trackers/MOT20/improve/val-half/baseline+bec+act --GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_val_half.txt
         hota_command = "python TrackEval/scripts/run_mot_challenge.py " \
@@ -123,7 +123,8 @@ def eval_hota(results_folder, dataset, dataset_type):
                        "--NUM_PARALLEL_CORES 1  " \
                        "--GT_FOLDER datasets/MOT20/ " \
                        "--TRACKERS_FOLDER " + results_folder + " " \
-                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type) if dataset_type == "val" else "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type)
+                    #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type) if dataset_type == "val" else "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
                     #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type)
     else:
         assert dataset in ["dancetrack", "MOT17", "MOT20"]
@@ -142,6 +143,6 @@ if __name__ == '__main__':
     # eval(results_folder, gt_root, gt_type)
 
     dataset_type = "val"
-    dataset = "MOT20"
-    results_folder = "evaldata/trackers/{}/improve/val-half/baseline+bec+atm+std".format(dataset)
+    dataset = "MOT17"
+    results_folder = "evaldata/trackers/MOT17/sort/ablation/baseline".format(dataset)
     eval_hota(results_folder, dataset, dataset_type)

@@ -1,12 +1,12 @@
 # Get Started 
-We introduce the process of getting started on OC-SORT. This instruction is adapted from ByteTrack especially for the training part. We provide some simple pieces here, for details please refer to the source code and *utils/args.py*.
+**Our data structure is the same as [OC-SORT](https://github.com/noahcao/OC_SORT).** 
 
 ## Data preparation
 
-1. Download [MOT17](https://motchallenge.net/), [MOT20](https://motchallenge.net/), [CrowdHuman](https://www.crowdhuman.org/), [Cityperson](https://github.com/Zhongdao/Towards-Realtime-MOT/blob/master/DATASET_ZOO.md), [ETHZ](https://github.com/Zhongdao/Towards-Realtime-MOT/blob/master/DATASET_ZOO.md), [DanceTrack](https://github.com/DanceTrack/DanceTrack) and put them under <OCSORT_HOME>/datasets in the following structure:
+1. Download [MOT17](https://motchallenge.net/), [MOT20](https://motchallenge.net/), [CrowdHuman](https://www.crowdhuman.org/), [Cityperson](https://github.com/Zhongdao/Towards-Realtime-MOT/blob/master/DATASET_ZOO.md), [ETHZ](https://github.com/Zhongdao/Towards-Realtime-MOT/blob/master/DATASET_ZOO.md), [DanceTrack](https://github.com/DanceTrack/DanceTrack) and put them under <BAM_HOME>/datasets in the following structure:
     ```
     datasets
-    |——————mot
+    |——————MOT17
     |        └——————train
     |        └——————test
     └——————crowdhuman
@@ -87,61 +87,42 @@ Download the COCO-pretrained YOLOX weight [here](https://github.com/Megvii-BaseD
 
 * **on DanceTrack Val set**
     ```shell
-    python tools/run_ocsort_dance.py -f exps/example/mot/yolox_dancetrack_val.py -c pretrained/bytetrack_dance_model.pth.tar -b 1 -d 1 --fp16 --fuse --expn $exp_name
+    python tools/run_bamsort.py --det_type yolox_x --dataset dancetrack --dataset_type val --w_bec 0.3 --bec_num 4 --min_hits 7 --std_time_since_update 5 --std_switch_cnt 1 --std_max_hits 50 --fp16 --fuse --expn $exp_name 
     ```
-    We follow the [TrackEval protocol](https://github.com/DanceTrack/DanceTrack/tree/main/TrackEval) for evaluation on the officially released validation set. This gives HOTA = 52.1 ~ 52.6.
+    We follow the [TrackEval protocol](https://github.com/DanceTrack/DanceTrack/tree/main/TrackEval) for evaluation on the officially released validation set. This gives HOTA = 55.5 ~ 55.9.
 
 * **on DanceTrack Test set**
     ```shell
-    python tools/run_ocsort_dance.py -f exps/example/mot/yolox_dancetrack_test.py -c pretrained/bytetrack_dance_model.pth.tar -b 1 -d 1 --fp16 --fuse --test --expn $exp_name
+    python tools/run_bamsort.py --det_type yolox_x --dataset dancetrack --dataset_type test --w_bec 0.3 --bec_num 4 --min_hits 5 --std_time_since_update 5 --std_switch_cnt 1 --std_max_hits 50 --expn $exp_name 
     ```
-    Submit the outputs to [the DanceTrack evaluation site](https://competitions.codalab.org/competitions/35786). This gives HOTA = 54.6 ~ 55.2.
+    Submit the outputs to [the DanceTrack evaluation site](https://competitions.codalab.org/competitions/35786). This gives HOTA = 59.9 ~ 60.5.
 
 * **on MOT17 half val**
     ```shell
-    python3 tools/run_ocsort.py -f exps/example/mot/yolox_x_ablation.py -c pretrained/bytetrack_ablation.pth.tar -b 1 -d 1 --fp16 --fuse --expn $exp_name
+    python tools/run_bamsort.py --det_type ablation --dataset MOT17 --dataset_type val --w_bec 0.4 --bec_num 4 --min_hits 1 --sort_with_std False --expn $exp_name 
     ```
-    We follow the [TrackEval protocol](https://github.com/DanceTrack/DanceTrack/tree/main/TrackEval) for evaluation on the self-splitted validation set. This gives you HOTA = 66.5.
+    We follow the [TrackEval protocol](https://github.com/DanceTrack/DanceTrack/tree/main/TrackEval) for evaluation on the self-splitted validation set. This gives you HOTA = 67.3 ~ 67.7.
 
 * **on MOT17/MOT20 Test set**
     ```shell
     # MOT17
-    python3 tools/run_ocsort.py -f exps/example/mot/yolox_x_mix_det.py -c pretrained/bytetrack_x_mot17.pth.tar -b 1 -d 1 --fp16 --fuse --expn $exp_name
+    python tools/run_bamsort.py --det_type yolox_x --dataset MOT17 --dataset_type test --w_bec 0.4 --bec_num 4 --min_hits 1 --sort_with_std False --expn $exp_name 
 
     # MOT20
-    python3 tools/run_ocsort.py -f exps/example/mot/yolox_x_mix_mot20_ch.py -c pretrained/bytetrack_x_mot20.tar -b 1 -d 1 --fp16 --fuse --track_thresh 0.4 --mot20 --expn $exp_name
+    python tools/run_bamsort.py --det_type yolox_x --dataset MOT20 --dataset_type test --w_bec 0.3 --bec_num 6 --min_hits 1 --sort_with_std False --expn $exp_name 
     ```
-    Submit the zipped output files to [MOTChallenge](https://motchallenge.net/) system. Following [the adaptive detection thresholds](https://github.com/ifzhang/ByteTrack/blob/d742a3321c14a7412f024f2218142c7441c1b699/yolox/evaluators/mot_evaluator.py#L139) by ByteTrack can further boost the performance. After interpolation (see below), this gives you HOTA = ~63.1 on MOT17 and HOTA = \~61.9 on MOT20.
-
-* **on KITTI Test set**
-  
-    For fair comparison of association performance only, we use the detection results from a public [PermaTrack](https://github.com/TRI-ML/permatrack) model weights as indicated [here](https://github.com/TRI-ML/permatrack/issues/16). The output of PermanceTrack is provided in *exps/permatrack_kitti_test/* already. Simply run the command to use OC-SORT over KITTI-test set:
-
-    ```shell
-    python tools/run_ocsort_public.py  --hp --out_path kitti_test --dataset kitti --raw_results_path exps/permatrack_kitti_test
-    ```
-
-    Then, submit the output .txt files to [the KITTI evaluation server](http://www.cvlibs.net/datasets/kitti/).
-
-* **on HeadTrack21 (CroHD)**
-
-    Similar to KITTI, we do not provide detector on CroHD head tracking dataset but adapt from detection results from existing results. Please download the results reported to the [evaluation server](https://motchallenge.net/results/Head_Tracking_21/) and place it at *datasets/headtrack/$tracker*
-
-    ```shell
-    python tools/run_ocsort_public.py  --raw_results_path datasets/headtrack/$tracker --hp --dataset headtrack --out_path out_headtrack_results 
-    ```
-    Then, submit the output files to the evaluation server above for evaluation.
+    Submit the zipped output files to [MOTChallenge](https://motchallenge.net/) system. Following [the adaptive detection thresholds](https://github.com/ifzhang/ByteTrack/blob/d742a3321c14a7412f024f2218142c7441c1b699/yolox/evaluators/mot_evaluator.py#L139) by ByteTrack can further boost the performance. After interpolation (see below), this gives you HOTA = ~63.5 on MOT17 and HOTA = \~61.9 on MOT20.
 
 
 *Note: We find the current implementation may show some randomness in different running trials. We are still inspecting this.*
 
 ## [Optional] Interpolation
-OC-SORT is designed for online tracking, but offline interpolation has been demonstrated efficient for many cases. To use the linear interpolation over existing tracking results:
+I have utilized the interpolation features from the OC-SORT algorithm to post-process existing tracking results. The OC-SORT algorithm offers two interpolation methods: linear interpolation and Gaussian Process Regression interpolation.
 ```shell
     # optional offline post-processing
     python3 tools/interpolation.py $result_path $save_path
 ```
-Furthermore, we provide a piece of attempt of using Gaussian Process Regression in interpolating trajectories, which work upon existing linear interpolation results:
+The OC-SORT algorithm also provides an attempt to use Gaussian Process Regression interpolation, which operates on existing linear interpolation results. To use Gaussian Process Regression interpolation, you can run the following command:
 ```shell
     python3 tools/gp_interpolation.py $raw_results_path $linear_interp_path $save_path
 ```

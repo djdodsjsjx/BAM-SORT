@@ -5,14 +5,15 @@ import time
 import cv2
 import torch
 import sys
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/OC_SORT/')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM_SORT/')
 from loguru import logger
 
 from yolox.data.data_augment import preproc
 from yolox.exp import get_exp
 from yolox.utils import fuse_model, get_model_info, postprocess, vis
 from yolox.utils.visualize import plot_tracking
-from trackers.ocsort_tracker.ocsort import OCSort
+# from trackers.ocsort_tracker.ocsort import OCSort
+from trackers.bamsort_tracker.bamsort_bec_atm_std import OCSort
 from trackers.tracking_utils.timer import Timer
 from pathlib import Path
 
@@ -136,13 +137,68 @@ class Predictor(object):
         vis_res = vis(img, bboxes, scores, cls, cls_conf, "person")
         return vis_res
 
+# def image_demo(predictor, vis_folder, current_time, args):
+#     if osp.isdir(args.path):
+#         files = get_image_list(args.path)
+#     else:
+#         files = [args.path]
+#     files.sort()
+#     tracker = OCSort(det_thresh=args.track_thresh, iou_threshold=args.iou_thresh, use_byte=args.use_byte)
+#     timer = Timer()
+#     results = []
+
+#     for frame_id, img_path in enumerate(files, 1):
+#         outputs, img_info = predictor.inference(img_path, timer)  # yolox推理
+#         if outputs[0] is not None:
+#             online_targets = tracker.update(outputs[0], [img_info['height'], img_info['width']], exp.test_size)
+#             online_tlwhs = []
+#             online_ids = []
+#             for t in online_targets:
+#                 tlwh = [t[0], t[1], t[2] - t[0], t[3] - t[1]]
+#                 tid = t[4]
+#                 vertical = tlwh[2] / tlwh[3] > args.aspect_ratio_thresh
+#                 if tlwh[2] * tlwh[3] > args.min_box_area and not vertical:
+#                     online_tlwhs.append(tlwh)
+#                     online_ids.append(tid)
+#                     results.append(
+#                         f"{frame_id},{tid},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},1.0,-1,-1,-1\n"
+#                     )
+#             timer.toc()
+#             online_im = plot_tracking(
+#                 img_info['raw_img'], online_tlwhs, online_ids, frame_id=frame_id, fps=1. / timer.average_time
+#             )
+#         else:
+#             timer.toc()
+#             online_im = img_info['raw_img']
+
+#         # result_image = predictor.visual(outputs[0], img_info, predictor.confthre)
+#         if args.save_result:
+#             timestamp = time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
+#             save_folder = osp.join(vis_folder, timestamp)
+#             os.makedirs(save_folder, exist_ok=True)
+#             cv2.imwrite(osp.join(save_folder, osp.basename(img_path)), online_im)
+
+#         if frame_id % 20 == 0:
+#             logger.info('Processing frame {} ({:.2f} fps)'.format(frame_id, 1. / max(1e-5, timer.average_time)))
+
+#         ch = cv2.waitKey(0)
+#         if ch == 27 or ch == ord("q") or ch == ord("Q"):
+#             break
+
+#     if args.save_result:
+#         res_file = osp.join(vis_folder, f"{timestamp}.txt")
+#         with open(res_file, 'w') as f:
+#             f.writelines(results)
+#         logger.info(f"save results to {res_file}")
+
+
 def image_demo(predictor, vis_folder, current_time, args):
     if osp.isdir(args.path):
         files = get_image_list(args.path)
     else:
         files = [args.path]
     files.sort()
-    tracker = OCSort(det_thresh=args.track_thresh, iou_threshold=args.iou_thresh, use_byte=args.use_byte)
+    tracker = OCSort(args=args, det_thresh = args.track_thresh, iou_threshold=args.iou_thresh, asso_func=args.asso, delta_t=args.deltat, inertia=args.inertia, use_byte=args.use_byte, min_hits=args.min_hits)
     timer = Timer()
     results = []
 

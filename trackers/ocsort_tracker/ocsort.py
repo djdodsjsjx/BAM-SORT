@@ -416,12 +416,12 @@ class OCSort(object):
                 if (self.frame_count <= self.min_hits) or (trk.hit_streak >= self.min_hits):
                     # id+1 as MOT benchmark requires positive
                     ret.append(np.concatenate((d, [trk.id+1], [trk.cate], [0])).reshape(1,-1)) 
-                if trk.hit_streak == self.min_hits:
-                    # Head Padding (HP): recover the lost steps during initializing the track
-                    for prev_i in range(self.min_hits - 1):
-                        prev_observation = trk.history_observations[-(prev_i+2)]
-                        ret.append((np.concatenate((prev_observation[:4], [trk.id+1], [trk.cate], 
-                            [-(prev_i+1)]))).reshape(1,-1))
+                # if trk.hit_streak == self.min_hits:  # HP
+                #     # Head Padding (HP): recover the lost steps during initializing the track
+                #     for prev_i in range(self.min_hits - 1):
+                #         prev_observation = trk.history_observations[-(prev_i+2)]
+                #         ret.append((np.concatenate((prev_observation[:4], [trk.id+1], [trk.cate], 
+                #             [-(prev_i+1)]))).reshape(1,-1))
             i -= 1 
             if (trk.time_since_update > self.max_age):
                   self.trackers.pop(i)

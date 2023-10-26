@@ -11,12 +11,12 @@ from yolox.utils import (
     time_synchronized,
     xyxy2xywh
 )
-# from trackers.ocsort_tracker.ocsort import OCSort
+from trackers.ocsort_tracker.ocsort import OCSort
 # from trackers.sparse_tracker.sparse_tracker import SparseTracker
 # from trackers.integrated_ocsort_embedding.ocsort import OCSort
 # from trackers.hybird_sort_tracker.hybird_sort import Hybird_Sort
 # from trackers.hybird_sort_tracker.hybird_sort_reid import Hybird_Sort_ReID
-from trackers.myocsort_tracker.ocsort2 import OCSort
+# from trackers.myocsort_tracker.ocsort2 import OCSort
 import contextlib
 import io
 import os
@@ -418,8 +418,8 @@ class MOTEvaluator:
             model(x)
             model = model_trt
         # OCSORT跟踪器初始化
-        # tracker = OCSort(det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh,
-        #     asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia)
+        tracker = OCSort(det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh,
+            asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia)
         # tracker = SparseTracker(self.args)
         
         # oc_sort_args = dict(

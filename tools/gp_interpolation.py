@@ -6,8 +6,9 @@ import glob
 from sklearn import preprocessing
 import scipy 
 import sys 
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/OC_SORT/')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 import scipy.spatial
+from tools.mota import eval_hota
 
 
 def mkdir_if_missing(d):
@@ -137,8 +138,9 @@ if __name__ == "__main__":
             * li_path: the path to results after linear interpolation
     """
     # txt_path, li_path, save_path = sys.argv[1], sys.argv[2], sys.argv[3]
-    txt_path = "evaldata/trackers/mot_challenge/MOT17-train/yolox_x_mot17_train_results2/data"
-    li_path = "evaldata/trackers/mot_challenge/MOT17-train/yolox_x_mot17_train_LD_results2"
-    save_path = "evaldata/trackers/mot_challenge/MOT17-train/yolox_x_mot17_train_GPR_results2"
+    txt_path = "evaldata/trackers/MOT17/improve/ablation/baseline+bec+atm+std/data"
+    li_path = "evaldata/trackers/MOT17/improve/ablation/baseline+bec+atm+std+LI"
+    save_path = "evaldata/trackers/MOT17/improve/ablation/baseline+bec+atm+std+GPR"
     mkdir_if_missing(save_path)
     gp_interpolation(txt_path, save_path, li_path, n_min=30, n_dti=20)
+    eval_hota(save_path, "MOT17", "val")

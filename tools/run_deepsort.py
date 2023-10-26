@@ -91,11 +91,11 @@ def main(args):
     results_folder = str(increment_path(results_folder, exist_ok=False))  # 对已有的文件进行评估，需要注释
     os.makedirs(results_folder, exist_ok=True)
 
-    results_folder_tracker_num = args.tn_out_path
-    results_folder_tracker_num = str(increment_path(results_folder_tracker_num, exist_ok=False))  # 对已有的文件进行评估，需要注释
-    os.makedirs(results_folder_tracker_num, exist_ok=True)
+    # results_folder_tracker_num = args.tn_out_path
+    # results_folder_tracker_num = str(increment_path(results_folder_tracker_num, exist_ok=False))  # 对已有的文件进行评估，需要注释
+    # os.makedirs(results_folder_tracker_num, exist_ok=True)
 
-    raw_path = "{}/{}/{}".format(args.raw_results_path, args.dataset, args.dataset_type)  # 检测路径
+    raw_path = "{}/{}/{}/{}".format(args.raw_results_path, args.dataset, args.det_type, args.dataset_type)  # 检测路径
     dataset = args.dataset
     
     if args.dataset == "dancetrack":
@@ -124,7 +124,7 @@ def main(args):
 
         seq_file = open(seq_file)
         results_filename = os.path.join(results_folder, seq_name)
-        results_filename_tracker_num = os.path.join(results_folder_tracker_num, seq_name)
+        # results_filename_tracker_num = os.path.join(results_folder_tracker_num, seq_name)
         lines = seq_file.readlines()
         line_count = 0 
         for line in lines:

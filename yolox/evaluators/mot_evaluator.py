@@ -11,12 +11,12 @@ from yolox.utils import (
     time_synchronized,
     xyxy2xywh
 )
-# from trackers.ocsort_tracker.ocsort import OCSort
+from trackers.ocsort_tracker.ocsort import OCSort
 # from trackers.sparse_tracker.sparse_tracker import SparseTracker
 # from trackers.integrated_ocsort_embedding.ocsort import OCSort
 # from trackers.hybird_sort_tracker.hybird_sort import Hybird_Sort
 # from trackers.hybird_sort_tracker.hybird_sort_reid import Hybird_Sort_ReID
-from trackers.bamsort_tracker.bamsort_bec import OCSort
+# from trackers.bamsort_tracker.bamsort_bec import OCSort
 import contextlib
 import io
 import os
@@ -418,8 +418,8 @@ class MOTEvaluator:
             model(x)
             model = model_trt
         # OCSORT跟踪器初始化
-        # tracker = OCSort(det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh,
-        #     asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia)
+        tracker = OCSort(det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh,
+            asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia)
         # tracker = SparseTracker(self.args)
         
         # oc_sort_args = dict(
@@ -441,8 +441,8 @@ class MOTEvaluator:
         # )
         # tracker = OCSort(**oc_sort_args)
 
-        tracker = OCSort(args=self.args, det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh, asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia, use_byte=self.args.use_byte)
-        ori_thresh = self.args.track_thresh
+        # tracker = OCSort(args=self.args, det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh, asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia, use_byte=self.args.use_byte)
+        # ori_thresh = self.args.track_thresh
 
         os.makedirs("exps/MOT17/{}/val".format(self.args.det_type), exist_ok=True)
         for cur_iter, (imgs, _, info_imgs, ids, raw_img) in enumerate(
@@ -467,12 +467,12 @@ class MOTEvaluator:
                 if video_name not in video_names:
                     video_names[video_id] = video_name
                 if frame_id == 1:
-                    # tracker = OCSort(det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh,
-                    #     asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia)
+                    tracker = OCSort(det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh,
+                        asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia)
                     # tracker = SparseTracker(self.args)
                     # tracker = OCSort(**oc_sort_args)
 
-                    tracker = OCSort(args=self.args, det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh, asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia, use_byte=self.args.use_byte)
+                    # tracker = OCSort(args=self.args, det_thresh = self.args.track_thresh, iou_threshold=self.args.iou_thresh, asso_func=self.args.asso, delta_t=self.args.deltat, inertia=self.args.inertia, use_byte=self.args.use_byte)
 
                     if len(results) != 0:
                         try:
@@ -557,14 +557,14 @@ class MOTEvaluator:
                 for t in online_targets:
                     tlwh = [t[0], t[1], t[2] - t[0], t[3] - t[1]]
                     tid = t[4]
-                    score = t[5]
+                    # score = t[5]
                     # tlwh = t.tlwh  # SparseTracker
                     # tid = t.track_id
                     vertical = tlwh[2] / tlwh[3] > 1.6
                     if tlwh[2] * tlwh[3] > self.args.min_box_area and not vertical:
                         online_tlwhs.append(tlwh)
                         online_ids.append(tid)
-                        online_scores.append(score)
+                        # online_scores.append(score)
                 # save results
                 results.append((frame_id, online_tlwhs, online_ids))  # 每一帧跟踪器信息: fid, x, y, w, h, tid
 

@@ -306,9 +306,9 @@ class OCSort(object):
             unmatched_trks: 该跟踪线，没有与之匹配的检测框
         """
         matched, unmatched_dets, unmatched_trks_activation = associate(  # 第一次关联
-            dets, trks_activation, self.iou_threshold, velocities, k_observations, 
+            dets, trks_activation, self.iou_threshold, velocities, k_observations,
             self.inertia, det_embs=None, trk_embs=None, 
-            sort_with_reid=self.args.sort_with_reid, sort_with_bec=False, 
+            sort_with_reid=self.args.sort_with_reid, sort_with_bec=self.args.sort_with_bec,
             w_emb=self.args.w_emb, w_bec=self.args.w_bec, bec_num=self.args.bec_num)
         for m in matched:  # 更新轨迹线
             self.trackers[taid_to_tid[m[1]]].update(dets[m[0], :], scores[m[0]])

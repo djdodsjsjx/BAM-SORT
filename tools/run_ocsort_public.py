@@ -21,7 +21,7 @@ import time
 
 import sys
 sys.path.append('./')
-from trackers.myocsort_tracker.ocsort3 import OCSort
+from trackers.ocsort_tracker.ocsort import OCSort
 from utils.args import make_parser
 import os
 import motmetrics as mm
@@ -123,8 +123,8 @@ def compare_dataframes(gts, ts):
 
 @logger.catch
 def main(args):
-    results_folder = args.out_path
-    results_folder = str(increment_path(results_folder, exist_ok=False))  # 对已有的文件进行评估，需要注释
+    results_folder = os.path.join(args.out_path, args.dataset, args.dataset_type, args.expn)
+    results_folder = str(increment_path(results_folder, exist_ok=False))
     os.makedirs(results_folder, exist_ok=True)
     raw_path = "{}/{}/{}".format(args.raw_results_path, args.dataset, args.dataset_type)  # 检测路径
     dataset = args.dataset
@@ -133,7 +133,6 @@ def main(args):
     total_time = 0 
     total_frame = 0 
 
-    
     if dataset == "kitti":
         test_seqs = ["%04d" % i for i in range(29)]
         cats = ['Pedestrian', 'Car', 'Cyclist', "Van", "Truck"]
@@ -153,9 +152,8 @@ def main(args):
 
     for seq_name in test_seqs:
         print("starting seq {}".format(seq_name))
-        # tracker = OCSort(args.track_thresh, iou_threshold=args.iou_thresh, delta_t=args.deltat, 
-        #     asso_func=args.asso, inertia=args.inertia)
-        tracker = OCSort(args=args, det_thresh = args.track_thresh, iou_threshold=args.iou_thresh, asso_func=args.asso, delta_t=args.deltat, inertia=args.inertia, use_byte=args.use_byte)
+        tracker = OCSort(args.track_thresh, iou_threshold=args.iou_thresh, delta_t=args.deltat, 
+            asso_func=args.asso, inertia=args.inertia)
         if dataset in ["kitti", "bdd"]:
             seq_trks = np.empty((0, 18))
         elif dataset == "headtrack":

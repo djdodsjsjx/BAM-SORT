@@ -18,8 +18,6 @@ from trackers.deepsort_tracker.deepsort import DeepSort
 from trackers.motdt_tracker.motdt_tracker import OnlineTracker
 from trackers.sparse_tracker.sparse_tracker import SparseTracker
 # from trackers.integrated_ocsort_embedding.ocsort import OCSort
-from trackers.hybird_sort_tracker.hybird_sort import Hybird_Sort
-from trackers.hybird_sort_tracker.hybird_sort_reid import Hybird_Sort_ReID
 from trackers.bamsort_tracker.bamsort_bec import OCSort
 import contextlib
 import io

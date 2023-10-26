@@ -293,7 +293,7 @@ class OnlineTracker(object):
             bec_matrix = 0
         dists += -bec_matrix*self.args.w_bec
 
-        matches, u_track, u_detection = matching.linear_assignment(dists, thresh=self.min_ap_dist)
+        matches, u_track, u_detection = matching.linear_assignment(dists, thresh=self.min_ap_dist-np.max(bec_matrix*self.args.w_bec))
         for itracked, idet in matches:
             tracked_stracks[itracked].update(detections[idet], self.frame_id, image)
 

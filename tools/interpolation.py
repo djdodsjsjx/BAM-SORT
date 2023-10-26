@@ -3,10 +3,10 @@ import os
 import glob
 import motmetrics as mm
 import sys 
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/OC_SORT/')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 from yolox.evaluators.evaluation import Evaluator
 from loguru import logger
-
+from tools.mota import eval_hota
 def mkdir_if_missing(d):
     if not os.path.exists(d):
         os.makedirs(d)
@@ -118,7 +118,18 @@ def dti_kitti(txt_path, save_path, n_min=30, n_dti=20):
     seq_txts = sorted(glob.glob(os.path.join(txt_path, '*.txt')))
     for seq_txt in seq_txts:
         seq_name = seq_txt.split('/')[-1]
-        seq_data = np.loadtxt(seq_txt, dtype=np.float64, delimiter=',')
+        # seq_data = np.loadtxt(seq_txt, dtype=np.float64, delimiter=',')
+        seq1_data = np.genfromtxt(seq_txt, delimiter=',', dtype=None, encoding=None)
+        seq_data = []
+        for vs in seq1_data:
+            words = vs.split()
+            seq2_data = []
+            for i, v in enumerate(words):
+                if i == 2:
+                    continue
+                seq2_data.append(float(v))
+            seq_data.append(seq2_data)
+        seq_data = np.array(seq_data)
         min_id = int(np.min(seq_data[:, 1]))
         max_id = int(np.max(seq_data[:, 1]))
         seq_results = np.zeros((1, 10), dtype=np.float64)
@@ -167,12 +178,10 @@ def dti_kitti(txt_path, save_path, n_min=30, n_dti=20):
 
 if __name__ == '__main__':
     # txt_path, save_path = sys.argv[1], sys.argv[2]
-    txt_path = "evaldata/trackers/mot_challenge/MOT17-train/yolox_x_mot17_train_results2/data"
-    save_path = "evaldata/trackers/mot_challenge/MOT17-train/yolox_x_mot17_train_LD_results2"
-    data_root = 'datasets/MOT17/train'
+    txt_path = "evaldata/trackers/KITTI/improve/test/baseline+bec+act+now/res"
+    save_path = "evaldata/trackers/KITTI/improve/test/baseline+bec+atm+std+LI/res"
     mkdir_if_missing(save_path)
-    dti(txt_path, save_path, n_min=30, n_dti=20)  # 线性插值
-    # print('Before DTI: ')
-    # eval_mota(data_root, txt_path)
-    # print('After DTI:')
-    # eval_mota(data_root, save_path)
+    # dti(txt_path, save_path, n_min=30, n_dti=20)  # 线性插值
+    dti_kitti(txt_path, save_path, n_min=30, n_dti=20)
+
+    # eval_hota(save_path, "MOT17", "val")

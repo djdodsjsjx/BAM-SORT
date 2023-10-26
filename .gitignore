@@ -155,3 +155,7 @@ exps/MOT17/
 exps/MOT20/yolox_x
 exps/reid/
 tracker_num/
+OpenNI2/
+OpenNI.ini
+OpenNI2.dll
+OpenNI2.lib

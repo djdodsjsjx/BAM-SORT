@@ -86,7 +86,7 @@ def compare_dataframes(gts, ts):
 
 @logger.catch
 def main(args):
-    results_folder = args.out_path
+    results_folder = os.path.join(args.out_path, args.dataset, args.dataset_type, args.expn)
     results_folder = str(increment_path(results_folder, exist_ok=False))
     results_data = os.path.join(results_folder, "data")
     os.makedirs(results_data, exist_ok=True)
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     main(args)
 
     # tmp = args.bec_num
-    # bec_nums = [7, 8, 9]
+    # bec_nums = [3, 4, 5, 6, 7, 8, 9]
     # for bec_num in bec_nums:      
     #     filename = "{}_bec_num".format(bec_num)
     #     tmp_out_path = args.out_path
@@ -228,8 +228,8 @@ if __name__ == "__main__":
     #     args.out_path = tmp_out_path
     # args.min_hits = tmp
 
-    
-    # std_time_since_updates = [25]
+
+    # std_time_since_updates = [5, 10, 15, 20, 25]
     # std_switch_cnts = [0]
     # for std_time_since_update in std_time_since_updates:
     #     for std_switch_cnt in std_switch_cnts:      

@@ -7,7 +7,7 @@
 """
 import os
 import sys
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/OC_SORT/')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 import numpy as np
 import glob
 from os.path import join, exists
@@ -71,8 +71,8 @@ def GSInterpolation(path_in, path_out, interval=30, tau=10):
     np.savetxt(path_out, li, fmt='%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d')
 
 if __name__ == '__main__':
-    dir_in = 'evaldata/trackers/dancetrack/improve/test/baseline+bec+atm+std+reid/res/tracker'
-    dir_out = dir_in + '+LD'
+    dir_in = 'evaldata/trackers/MOT17/improve/ablation/baseline+bec+atm+std/data'
+    dir_out = "evaldata/trackers/MOT17/improve/ablation/baseline+bec+atm+std+GSI"
     if not exists(dir_out): 
         os.mkdir(dir_out)
     for path_in in sorted(glob.glob(dir_in + '/*.txt')):
@@ -80,4 +80,4 @@ if __name__ == '__main__':
             continue
         GSInterpolation(path_in, dir_out + "/{}".format(path_in.split("\\")[-1]))  # GSI
 
-    # eval_hota(dir_out, "dancetrack", "val")
+    eval_hota(dir_out, "MOT17", "val")
