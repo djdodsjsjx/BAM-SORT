@@ -2,86 +2,22 @@
 **Our data structure is the same as [OC-SORT](https://github.com/noahcao/OC_SORT).** 
 
 ## Data preparation
-
-1. Download [MOT17](https://motchallenge.net/), [MOT20](https://motchallenge.net/), [CrowdHuman](https://www.crowdhuman.org/), [Cityperson](https://github.com/Zhongdao/Towards-Realtime-MOT/blob/master/DATASET_ZOO.md), [ETHZ](https://github.com/Zhongdao/Towards-Realtime-MOT/blob/master/DATASET_ZOO.md), [DanceTrack](https://github.com/DanceTrack/DanceTrack) and put them under <BAM_HOME>/datasets in the following structure:
+1. Download [MOT17](https://motchallenge.net/), [MOT20](https://motchallenge.net/), [DanceTrack](https://github.com/DanceTrack/DanceTrack) preprocessing detection frame file under detector YOLOX and put them under <BAM_HOME>/exps in the following structure:
     ```
-    datasets
+    exps
+    |——————dancetrack
+    |        └——————yolox_x
+    |           └——————val
+    |           └——————test
     |——————MOT17
-    |        └——————train
-    |        └——————test
-    └——————crowdhuman
-    |        └——————Crowdhuman_train
-    |        └——————Crowdhuman_val
-    |        └——————annotation_train.odgt
-    |        └——————annotation_val.odgt
-    └——————MOT20
-    |        └——————train
-    |        └——————test
-    └——————Cityscapes
-    |        └——————images
-    |        └——————labels_with_ids
-    └——————ETHZ
-    |        └——————eth01
-    |        └——————...
-    |        └——————eth07
-    └——————dancetrack        
-             └——————train
-             └——————val
-             └——————test
+    |        └——————yolox_x
+    |           └——————test
+    |        └——————ablation
+    |           └——————val
+    |——————MOT20
+    |        └——————yolox_x
+    |           └——————test
     ```
-
-2. Turn the datasets to COCO format and mix different training data:
-
-    ```python
-    # replace "dance" with ethz/mot17/mot20/crowdhuman/cityperson for others
-    python3 tools/convert_dance_to_coco.py 
-    ```
-
-3. *[Optional]* If you want to training for MOT17/MOT20, follow the following to create mixed training set.
-
-    ```python
-    # build mixed training sets for MOT17 and MOT20 
-    python3 tools/mix_data_{ablation/mot17/mot20}.py
-    ```
-
-## Training
-You can use OC-SORT without training by adopting existing detectors. But we borrow the training guidelines from ByteTrack in case you want work on your own detector. 
-
-Download the COCO-pretrained YOLOX weight [here](https://github.com/Megvii-BaseDetection/YOLOX/tree/0.1.0) and put it under *\<OCSORT_HOME\>/pretrained*.
-
-* **Train ablation model (MOT17 half train and CrowdHuman)**
-
-    ```shell
-    python3 tools/train.py -f exps/example/mot/yolox_x_ablation.py -d 8 -b 48 --fp16 -o -c pretrained/yolox_x.pth
-    ```
-
-* **Train MOT17 test model (MOT17 train, CrowdHuman, Cityperson and ETHZ)**
-
-    ```shell
-    python3 tools/train.py -f exps/example/mot/yolox_x_mix_det.py -d 8 -b 48 --fp16 -o -c pretrained/yolox_x.pth
-    ```
-
-* **Train MOT20 test model (MOT20 train, CrowdHuman)**
-
-    For MOT20, you need to uncomment some code lines to add box clipping: [[1]](https://github.com/ifzhang/ByteTrack/blob/72cd6dd24083c337a9177e484b12bb2b5b3069a6/yolox/data/data_augment),[[2]](https://github.com/ifzhang/ByteTrack/blob/72cd6dd24083c337a9177e484b12bb2b5b3069a6/yolox/data/datasets/mosaicdetection.py#L122),[[3]](https://github.com/ifzhang/ByteTrack/blob/72cd6dd24083c337a9177e484b12bb2b5b3069a6/yolox/data/datasets/mosaicdetection.py#L217) and [[4]](https://github.com/ifzhang/ByteTrack/blob/72cd6dd24083c337a9177e484b12bb2b5b3069a6/yolox/utils/boxes.py#L115). Then run the command:
-
-    ```shell
-    python3 tools/train.py -f exps/example/mot/yolox_x_mix_mot20_ch.py -d 8 -b 48 --fp16 -o -c pretrained/yolox_x.pth
-    ```
-
-* **Train on DanceTrack train set**
-    ```shell
-    python3 tools/train.py -f exps/example/dancetrack/yolox_x.py -d 8 -b 48 --fp16 -o -c pretrained/yolox_x.pth
-    ```
-
-* **Train custom dataset**
-
-    First, you need to prepare your dataset in COCO format. You can refer to [MOT-to-COCO](https://github.com/ifzhang/ByteTrack/blob/main/tools/convert_mot17_to_coco.py) or [CrowdHuman-to-COCO](https://github.com/ifzhang/ByteTrack/blob/main/tools/convert_crowdhuman_to_coco.py). Then, you need to create a Exp file for your dataset. You can refer to the [CrowdHuman](https://github.com/ifzhang/ByteTrack/blob/main/exps/example/mot/yolox_x_ch.py) training Exp file. Don't forget to modify get_data_loader() and get_eval_loader in your Exp file. Finally, you can train bytetrack on your dataset by running:
-
-    ```shell
-    python3 tools/train.py -f exps/example/mot/your_exp_file.py -d 8 -b 48 --fp16 -o -c pretrained/yolox_x.pth
-    ```
-
 
 ## Evaluation
 
