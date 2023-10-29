@@ -87,20 +87,12 @@ def compare_dataframes(gts, ts):
 
 @logger.catch
 def main(args):
-    results_folder = args.out_path
+    results_folder = os.path.join(args.out_path, args.dataset, args.dataset_type, args.expn)
     results_folder = str(increment_path(results_folder, exist_ok=False))  # 对已有的文件进行评估，需要注释
     os.makedirs(results_folder, exist_ok=True)
 
-    # results_folder_tracker_num = args.tn_out_path
-    # results_folder_tracker_num = str(increment_path(results_folder_tracker_num, exist_ok=False))  # 对已有的文件进行评估，需要注释
-    # os.makedirs(results_folder_tracker_num, exist_ok=True)
-
     raw_path = "{}/reid/{}/{}/{}".format(args.raw_results_path, args.dataset, args.det_type, args.dataset_type)  # 检测路径
     dataset = args.dataset
-    if args.dataset == "dancetrack":
-        pic_raw_path = "datasets/{}/{}".format(args.dataset, args.dataset_type)
-    else:
-        pic_raw_path = "datasets/{}/{}".format(args.dataset, "test" if args.dataset_type == "test" else "train")
     total_time = 0
     total_frame = 0
 

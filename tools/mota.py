@@ -134,6 +134,59 @@ def eval_hota(results_folder, dataset, dataset_type):
     # print("Running over {} frames takes {}s. FPS={}".format(total_frame, total_time, total_frame / total_time))
     return 
 
+def eval_hota_all(results_folder, dataset, dataset_type):
+    if dataset == "dancetrack":
+        # python TrackEval/scripts/run_mot_challenge.py --BENCHMARK dancetrack --SPLIT_TO_EVAL val --TRACKERS_TO_EVAL '' --METRICS HOTA CLEAR Identity --TIME_PROGRESS False --TRACKER_SUB_FOLDER '' --GT_FOLDER datasets/dancetrack/ --USE_PARALLEL False --NUM_PARALLEL_CORES 8 --TRACKERS_FOLDER evaldata/trackers/DanceTrack/improve/val/baseline+bec+act --GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt
+        hota_command = "python TrackEval/scripts/run_mot_challenge.py " \
+                       f"--BENCHMARK dancetrack " \
+                       f"--SPLIT_TO_EVAL {dataset_type}  " \
+                       "--METRICS HOTA CLEAR Identity " \
+                       "--TRACKERS_TO_EVAL eval " \
+                       "--TIME_PROGRESS False " \
+                       "--TRACKER_SUB_FOLDER ''  " \
+                       "--USE_PARALLEL False " \
+                       "--NUM_PARALLEL_CORES 8 " \
+                       "--GT_FOLDER datasets/dancetrack/ " \
+                       "--TRACKERS_FOLDER " + results_folder + " "\
+                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+    elif dataset == "MOT17":
+        # python TrackEval/scripts/run_mot_challenge.py --BENCHMARK MOT17 --SPLIT_TO_EVAL train --TRACKERS_TO_EVAL '' --METRICS HOTA CLEAR Identity VACE --TIME_PROGRESS False --GT_FOLDER datasets/MOT17/ --USE_PARALLEL False --NUM_PARALLEL_CORES 1 --TRACKERS_FOLDER evaldata/trackers/MOT17/improve/val-half/baseline+bec+act+new --GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_val_half.txt
+        hota_command = "python TrackEval/scripts/run_mot_challenge.py " \
+                       "--BENCHMARK MOT17 " \
+                       "--SPLIT_TO_EVAL train " \
+                       "--TRACKERS_TO_EVAL eval " \
+                       "--METRICS HOTA CLEAR Identity VACE " \
+                       "--TIME_PROGRESS False " \
+                       "--TRACKER_SUB_FOLDER ''  " \
+                       "--USE_PARALLEL False " \
+                       "--NUM_PARALLEL_CORES 1  " \
+                       "--GT_FOLDER datasets/MOT17/ " \
+                       "--TRACKERS_FOLDER " + results_folder + " " \
+                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+                    #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type) if dataset_type == "val" else "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+    elif dataset == "MOT20":
+        # python TrackEval/scripts/run_mot_challenge.py --BENCHMARK MOT20 --SPLIT_TO_EVAL train --TRACKERS_TO_EVAL '' --METRICS HOTA CLEAR Identity VACE --TIME_PROGRESS False --GT_FOLDER datasets/MOT20/ --USE_PARALLEL False --NUM_PARALLEL_CORES 1 --TRACKERS_FOLDER evaldata/trackers/MOT20/improve/val-half/baseline+bec+act --GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_val_half.txt
+        hota_command = "python TrackEval/scripts/run_mot_challenge.py " \
+                       "--BENCHMARK MOT20 " \
+                       "--SPLIT_TO_EVAL train " \
+                       "--TRACKERS_TO_EVAL eval " \
+                       "--METRICS HOTA CLEAR Identity VACE " \
+                       "--TRACKER_SUB_FOLDER ''  " \
+                       "--TIME_PROGRESS False " \
+                       "--USE_PARALLEL False " \
+                       "--NUM_PARALLEL_CORES 1  " \
+                       "--GT_FOLDER datasets/MOT20/ " \
+                       "--TRACKERS_FOLDER " + results_folder + " " \
+                       "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+                    #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type) if dataset_type == "val" else "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt.txt"
+                    #    "--GT_LOC_FORMAT {gt_folder}/{seq}/gt/gt_" + "{}_half.txt".format(dataset_type)
+    else:
+        assert dataset in ["dancetrack", "MOT17", "MOT20"]
+    os.system(hota_command)
+
+    logger.info('Completed')
+    # print("Running over {} frames takes {}s. FPS={}".format(total_frame, total_time, total_frame / total_time))
+    return 
 
 if __name__ == '__main__':
 

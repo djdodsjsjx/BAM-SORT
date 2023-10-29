@@ -62,7 +62,7 @@ def make_parser():
         help="path to the raw tracking results from other tracks")
     # parser.add_argument('--out_path', type=str, default="evaldata/trackers/MOT20/improve/train-half/baseline+now", help="path to save output results")
     parser.add_argument('--out_path', type=str, default="evaldata/trackers", help="path to save output results") 
-    parser.add_argument("--expn", type=str, default="baseline")
+    parser.add_argument("--expn", type=str, default="bamsort")
     # parser.add_argument('--tn_out_path', type=str, default="evaldata/trackers/MOT20/tracker_num/val-half/baseline", help="path to save output results")
     parser.add_argument('--det_type', type=str, default="yolox_x", help="yolox_x | ablation")
     parser.add_argument("--dataset", type=str, default="dancetrack", help="MOT17| MOT20 | dancetrack | kitti | bdd")
@@ -101,7 +101,6 @@ def make_parser():
     parser.add_argument("--std_time_since_update", type=int, default=5)  # dancetrack: 5  MOT17: 15   MOT20: 20
     parser.add_argument("--std_switch_cnt", type=int, default=1)  # dancetrack & MOT17&MOT20: 1
     parser.add_argument("--std_max_hits", type=int, default=50)
-
 
     parser.add_argument("--sort_with_reid", default=False, action="store_true", help="use ReID model for BAM-SORT.")
     parser.add_argument("--w_emb", type=float, default=0.75, help="Combine weight for emb cost")

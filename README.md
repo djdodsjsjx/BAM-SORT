@@ -29,21 +29,21 @@ Multiple Object Tracking (MOT) aims to estimate object bounding boxes and identi
 | Tracker          | HOTA | MOTA | IDF1 |
 | :--------------- | :--: | :--: | :--: |
 | OC-SORT          | 54.6 | 89.6 | 54.6 |
-| BAM-SORT         | 60.5 | 89.8 | 63.0 | 
+| BAM-SORT         | 64.3 | 91.3 | 68.7 | 
 
 ### Results on MOT17 challenge test set
 
 | Tracker          | HOTA | MOTA | IDF1 |
 | :--------------- | :--: | :--: | :--: |
 | OC-SORT          | 63.2 | 78.0 | 77.5 |
-| BAM-SORT         | 63.5 | 79.3 | 77.6 |
+| BAM-SORT         | 64.5 | 80.5 | 79.9 |
 
 ### Results on MOT20 challenge test set
 
 | Tracker          | HOTA | MOTA | IDF1 |
 | :--------------- | :--: | :--: | :--: |
 | OC-SORT          | 62.1 | 75.5 | 75.9 |
-| BAM-SORT         | 61.4 | 73.8 | 74.8 |
+| BAM-SORT         | 62.0 | 74.0 | 76.2 |
 
 
 

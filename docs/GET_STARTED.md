@@ -2,7 +2,7 @@
 **Our data structure is the same as [OC-SORT](https://github.com/noahcao/OC_SORT).** 
 
 ## Data preparation
-1. Download [MOT17](https://motchallenge.net/), [MOT20](https://motchallenge.net/), [DanceTrack](https://github.com/DanceTrack/DanceTrack) preprocessing detection frame file under detector YOLOX and put them under <BAM_HOME>/exps in the following structure:
+1. Download [MOT17](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing), [MOT20](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing), [DanceTrack](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing) preprocessing detection frame file under detector YOLOX and put them under <BAM_HOME>/exps in the following structure:
     ```
     exps
     |——————dancetrack
@@ -56,10 +56,10 @@
 I have utilized the interpolation features from the OC-SORT algorithm to post-process existing tracking results. The OC-SORT algorithm offers two interpolation methods: linear interpolation and Gaussian Process Regression interpolation.
 ```shell
     # optional offline post-processing
-    python3 tools/interpolation.py $result_path $save_path
+    python tools/interpolation.py $result_path $save_path
 ```
 The OC-SORT algorithm also provides an attempt to use Gaussian Process Regression interpolation, which operates on existing linear interpolation results. To use Gaussian Process Regression interpolation, you can run the following command:
 ```shell
-    python3 tools/gp_interpolation.py $raw_results_path $linear_interp_path $save_path
+    python tools/gp_interpolation.py $raw_results_path $linear_interp_path $save_path
 ```
 *Note: for the results in our paper on MOT17/MOT20 private settings and HeadTrack, we use linear interpolation by default.*

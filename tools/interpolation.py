@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 from yolox.evaluators.evaluation import Evaluator
 from loguru import logger
-from tools.mota import eval_hota
+from tools.mota import eval_hota, eval_hota_all
 def mkdir_if_missing(d):
     if not os.path.exists(d):
         os.makedirs(d)
@@ -178,10 +178,10 @@ def dti_kitti(txt_path, save_path, n_min=30, n_dti=20):
 
 if __name__ == '__main__':
     # txt_path, save_path = sys.argv[1], sys.argv[2]
-    txt_path = "evaldata/trackers/KITTI/improve/test/baseline+bec+act+now/res"
-    save_path = "evaldata/trackers/KITTI/improve/test/baseline+bec+atm+std+LI/res"
+    txt_path = "evaldata/trackers/MOT20/test/bamsort+reid+cmc"
+    save_path = "evaldata/trackers/MOT20/test/bamsort+reid+cmc+li"
     mkdir_if_missing(save_path)
-    # dti(txt_path, save_path, n_min=30, n_dti=20)  # 线性插值
-    dti_kitti(txt_path, save_path, n_min=30, n_dti=20)
+    dti(txt_path, save_path, n_min=30, n_dti=20)  # 线性插值
+    # dti_kitti(txt_path, save_path, n_min=30, n_dti=20)
 
-    # eval_hota(save_path, "MOT17", "val")
+    # eval_hota_all(save_path, "MOT20", "val")
