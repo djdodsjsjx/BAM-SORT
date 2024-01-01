@@ -96,9 +96,11 @@ def plot_traj_marge3(traj_file, bam_result_src, oc_result_src, name, file_name):
         oc_has_tid.add(oc_res_id)
 
         fig, ax = plt.subplots(figsize=(12, 6), dpi=200)  # 轨迹图初始化
-        ax.set_xlim(0, 2000)
-        ax.set_ylim(0, 1200)
-        
+        # ax.set_xlim(0, 2000)
+        # ax.set_ylim(0, 1200)
+        ax.autoscale()
+        ax.autoscale_view()
+        ax.axis('off')
         step, div = 1, 2
         max_frame = int(traj[:,0].max()) // div
         frames = traj[:max_frame, 0]
@@ -276,7 +278,7 @@ def plot_traj_gif(traj_file, result_src, name, file_name):
 if __name__ == "__main__":
     # name = sys.argv[1]
     # os.makedirs(os.path.join("traj_plots/{}".format(name)), exist_ok=True)
-    OUT_SRC = "dancetrack_fic_bamsort_result"
+    OUT_SRC = "dancetrack_fic_result"
     file_name = str(increment_path("traj_plots/{}".format(OUT_SRC), exist_ok=False))
     os.makedirs(file_name, exist_ok=True)
 
@@ -292,9 +294,9 @@ if __name__ == "__main__":
 
         # plot_traj(os.path.join(gt_src, seq, "gt/gt.txt"), name)
         # plot_traj_gif(os.path.join(gt_src, seq, "gt/gt.txt"), "{}/{}.txt".format(result_src, seq), "{}/{}.txt".format(oc_result_src, seq), name, file_name)  # datasets/dancetrack/val/dancetrack004/gt/gt.txt
-        # plot_traj_marge3(os.path.join(gt_src, seq, "gt/gt.txt"), "{}/{}.txt".format(bam_result_src, seq), "{}/{}.txt".format(oc_result_src, seq), name, file_name)
+        plot_traj_marge3(os.path.join(gt_src, seq, "gt/gt.txt"), "{}/{}.txt".format(bam_result_src, seq), "{}/{}.txt".format(oc_result_src, seq), name, file_name)
         # plot_traj_marge2(os.path.join(gt_src, seq, "gt/gt.txt"), "{}/{}.txt".format(oc_result_src, seq), name, file_name, color=(1, 0, 0))
-        plot_traj_marge2(os.path.join(gt_src, seq, "gt/gt.txt"), "{}/{}.txt".format(bam_result_src, seq), name, file_name, color=(0, 127/255, 0))
+        # plot_traj_marge2(os.path.join(gt_src, seq, "gt/gt.txt"), "{}/{}.txt".format(bam_result_src, seq), name, file_name, color=(0, 127/255, 0))
         
         # name = "baseline_{}".format(seq)
         # os.makedirs(os.path.join("traj_plots/{}".format(name)), exist_ok=True)

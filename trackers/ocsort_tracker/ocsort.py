@@ -189,7 +189,14 @@ class OCSort(object):
         self.inertia = inertia
         self.use_byte = use_byte
         KalmanBoxTracker.count = 0
-
+    def save_info(self, dets):
+        res_id = []
+        for trt in self.trackers:
+            res_id.append(trt.id)
+        if dets is None:
+            return [self.frame_count, 0, len(res_id)]
+        # dets = dets.cpu().numpy()
+        return [self.frame_count, len(dets), len(res_id)]
     # def update(self, output_results, img_info, img_size):
     def update(self, dets):
         """

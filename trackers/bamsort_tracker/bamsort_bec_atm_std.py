@@ -91,7 +91,8 @@ class KalmanBoxTracker(object):
         self.history = []  # 跟踪器 仅存放丢失预测状态
         self.hits = 0  # 到当前帧，总匹配的帧数
         self.hit_streak = 0  # 到当前帧，连续匹配帧数
-        self.hit_switch_cnt = 0
+        self.hit_switch_cnt = 0  # 连续匹配到非匹配的切换次数
+        self.hit_max_switch_cnt = 0  # 实验用，在非稳态状态下，最大切换次数
         self.start_frame = start_frame
         self.std_max_hits = max_hits
         self.is_activation = False
@@ -143,6 +144,7 @@ class KalmanBoxTracker(object):
             self.hits += 1
             self.hit_streak += 1
             if self.hit_streak > self.std_max_hits:  # 连续跟踪std_max_hits次
+                self.hit_max_switch_cnt = max(self.hit_switch_cnt, self.hit_max_switch_cnt)
                 self.hit_switch_cnt = 0
             self.score = score
             self.kf.update(convert_bbox_to_z(bbox))
@@ -167,8 +169,9 @@ class KalmanBoxTracker(object):
         self.kf.predict()
         self.age += 1
         if(self.time_since_update > 0):  # 目标存在丢失
+            if self.hit_streak > 0:  # 丢失第一帧
+                self.hit_switch_cnt += 1
             self.hit_streak = 0
-            self.hit_switch_cnt += 1
         self.time_since_update += 1
         self.history.append(convert_x_to_bbox(self.kf.x))  # [x1, y1, x2, y2]
         return self.history[-1]
@@ -226,12 +229,21 @@ class OCSort(object):
 
     def save_info(self, dets):
         res_id = []
-        for trt in self.trackers:
+        for trt in self.trackers_activation:
             res_id.append(trt.id)
         if dets is None:
             return [self.frame_count, 0, len(res_id)]
         # dets = dets.cpu().numpy()
         return [self.frame_count, len(dets), len(res_id)]
+    
+    def get_switch_cnt(self):
+        res = []
+        for trk in self.trackers:
+            # res.append([trk.id, max(trk.hit_max_switch_cnt, trk.hit_switch_cnt)])
+            if trk.hit_switch_cnt > 0:
+                res.append([self.frame_count, trk.id, trk.hit_switch_cnt])
+        return res
+
     # def update(self, cur_img, output_results, img_info, img_size):
     # def update(self, cur_img, dets):
     def update(self, dets):
@@ -460,7 +472,7 @@ class OCSort(object):
                 ret.append(np.concatenate((d, [trk.id+1], [trk.score])).reshape(1, -1))  # 返回满足要求的跟踪框
             i -= 1
             # remove dead tracklet
-            if (trk.time_since_update > self.max_age) or (self.args.sort_with_std and trk.time_since_update > self.args.std_time_since_update and (len(self.trackers) > 20 and trk.hit_switch_cnt > self.args.std_switch_cnt)) :  # mot17: 5, 1  dancetrack: 10, 0
+            if (trk.time_since_update > self.max_age) or (self.args.sort_with_std and trk.time_since_update > self.args.std_time_since_update and (trk.hit_switch_cnt > self.args.std_switch_cnt)) :  # mot17: 5, 1  dancetrack: 10, 0
             # if trk.time_since_update > self.max_age:  # not std
                 self.trackers.pop(i)
                 trk.is_activation = False

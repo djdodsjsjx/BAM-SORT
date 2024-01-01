@@ -20,7 +20,7 @@ from loguru import logger
 import time
 
 import sys
-sys.path.append('./')
+sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
 from trackers.ocsort_tracker.ocsort import OCSort
 from utils.utils import write_results, write_results_no_score, write_det_results
 from utils.args import make_parser
@@ -29,6 +29,7 @@ import os
 import motmetrics as mm
 import numpy as np
 from pathlib import Path
+from yolox.utils.visualize import plot_tracking
 
 def increment_path(path, exist_ok=False, sep='', mkdir=False):
     # Increment file or directory path, i.e. runs/exp --> runs/exp{sep}2, runs/exp{sep}3, ... etc.
@@ -83,17 +84,22 @@ def compare_dataframes(gts, ts):
 
 @logger.catch
 def main(args):
-    results_folder = args.out_path
+    results_folder = os.path.join(args.out_path, args.dataset, args.dataset_type, args.expn)
     results_folder = str(increment_path(results_folder, exist_ok=False))
-    os.makedirs(results_folder, exist_ok=True)
-
-    # results_folder_tracker_num = args.tn_out_path
-    # results_folder_tracker_num = str(increment_path(results_folder_tracker_num, exist_ok=False))  # 对已有的文件进行评估，需要注释
-    # os.makedirs(results_folder_tracker_num, exist_ok=True)
+    results_data = os.path.join(results_folder, "data")
+    os.makedirs(results_data, exist_ok=True)
+    results_folder_tracker_num = os.path.join(results_folder, "track_num")
+    os.makedirs(results_folder_tracker_num, exist_ok=True)
+    results_folder_fig = os.path.join(results_folder, "fig")
+    os.makedirs(results_folder_fig, exist_ok=True)
+    
 
     raw_path = "{}/{}/{}/{}".format(args.raw_results_path, args.dataset, args.det_type, args.dataset_type)  # 检测路径
     dataset = args.dataset
-
+    if args.dataset == "dancetrack":
+        pic_raw_path = "datasets/{}/{}".format(args.dataset, args.dataset_type)
+    else:
+        pic_raw_path = "datasets/{}/{}".format(args.dataset, "test" if args.dataset_type == "test" else "train")
     total_time = 0
     total_frame = 0
 
@@ -101,33 +107,27 @@ def main(args):
 
     for seq_name in test_seqs:
         # print("starting seq {}".format(seq_name))
-        # tracker = OCSort(args=args, det_thresh = args.track_thresh, iou_threshold=args.iou_thresh, asso_func=args.asso, delta_t=args.deltat, inertia=args.inertia, use_byte=args.use_byte, min_hits=args.min_hits)
         tracker = OCSort(det_thresh = args.track_thresh, iou_threshold=args.iou_thresh,
             asso_func=args.asso, delta_t=args.deltat, inertia=args.inertia)
+        
+        rffig_seq = os.path.join(results_folder_fig, seq_name[:-4])
+        os.makedirs(rffig_seq, exist_ok=True)
+        pic_seq_path = os.path.join(pic_raw_path, seq_name[:-4], "img1")
+        img_cnt = len([f for f in os.listdir(pic_seq_path) if os.path.isfile(os.path.join(pic_seq_path, f))])
+        start_img_idx = 0
+        if (args.dataset == "MOT20" or args.dataset == "MOT17") and args.dataset_type == "val":
+            start_img_idx = img_cnt // 2
 
-        results_filename = os.path.join(results_folder, seq_name)
-        # results_filename_tracker_num = os.path.join(results_folder_tracker_num, seq_name)
+        results_filename = os.path.join(results_data, seq_name)
+        results_filename_tracker_num = os.path.join(results_folder_tracker_num, seq_name)
 
-        # seq_file = os.path.join(raw_path, seq_name)
-        # seq_trks = np.empty((0, 10))
-        # seq_file = open(seq_file)
-        # lines = seq_file.readlines()
-        # line_count = 0 
-        # for line in lines:
-        #     print("{}/{}".format(line_count,len(lines)))
-        #     line_count+=1
-        #     line = line.strip()
-        #     tmps = line.strip().split(",")
-        #     trk = np.array([float(d) for d in tmps])
-        #     trk = np.expand_dims(trk, axis=0)
-        #     seq_trks = np.concatenate([seq_trks, trk], axis=0)
         seq_file = os.path.join(raw_path, seq_name)
         seq_trks = np.loadtxt(seq_file, delimiter=',')
         min_frame = seq_trks[:,0].min()
         max_frame = seq_trks[:,0].max()
         results = []
         start_row = 0
-        # results_tracker_num = []
+        results_tracker_num = []
         for frame_ind in range(int(min_frame), int(max_frame)+1):
             # tmp_row = start_row
             # while (tmp_row < seq_trks.shape[0] and seq_trks[tmp_row, 0] == frame_ind) or (tmp_row == seq_trks.shape[0]):
@@ -139,6 +139,11 @@ def main(args):
             dets = seq_trks[np.where(seq_trks[:,0]==frame_ind)][:,2:6]
             scores = seq_trks[np.where(seq_trks[:,0]==frame_ind)][:,6]
             cur_dets = np.concatenate((dets, scores.reshape(-1, 1)), axis=1)
+
+            if args.dataset == "dancetrack":
+                cur_img = cv2.imread(os.path.join(pic_seq_path, '{:08d}.jpg'.format(frame_ind + start_img_idx)))
+            else:
+                cur_img = cv2.imread(os.path.join(pic_seq_path, '{:06d}.jpg'.format(frame_ind + start_img_idx)))
 
             t0 = time.time()
 
@@ -164,11 +169,16 @@ def main(args):
                     # online_scores.append(score)
             # save results
             results.append((frame_ind, online_tlwhs, online_ids))  # 每一帧跟踪器信息: fid, x, y, w, h, tid
-            # results_tracker_num.append(tracker.save_info(cur_dets))
+            results_tracker_num.append(tracker.save_info(cur_dets))
 
+            if self.args.save_datasets_pic:  # 保存图片
+                online_im = plot_tracking(
+                    cur_img, online_tlwhs, online_ids, frame_id=frame_ind, fps=0, distance=0
+                )
+                cv2.imwrite(rffig_seq + f'/{frame_ind}.jpg', online_im)
 
         write_results_no_score(results_filename, results)  # 将results写入到result_filename, fid, tid, x, y, w, h
-        # np.savetxt(results_filename_tracker_num, results_tracker_num, fmt="%d %d %d")
+        np.savetxt(results_filename_tracker_num, results_tracker_num, fmt="%d %d %d")
     
     track_time = 1000 * total_time / total_frame
     logger.info('track_fps: {} '.format(1000 / track_time))
@@ -181,7 +191,7 @@ def main(args):
     #     eval(results_folder, "datasets/{}/train".format(args.dataset), args.gt_type)  # "" | "_val_half" | "_train_half"
 
 
-    eval_hota(results_data, args.dataset, "val")
+    eval_hota(results_data, args.dataset, "train")
 
     logger.info('Completed')
     # print("Running over {} frames takes {}s. FPS={}".format(total_frame, total_time, total_frame / total_time))

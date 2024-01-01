@@ -90,13 +90,13 @@ def main(args):
     results_folder = str(increment_path(results_folder, exist_ok=False))
     results_data = os.path.join(results_folder, "data")
     os.makedirs(results_data, exist_ok=True)
+    results_folder_tracker_num = os.path.join(results_folder, "track_num")
+    os.makedirs(results_folder_tracker_num, exist_ok=True)
+    results_trkswitch = os.path.join(results_folder, "trkswitch")
+    os.makedirs(results_trkswitch, exist_ok=True)
 
     setup_logger(results_folder, distributed_rank=args.local_rank, filename="val_log.txt", mode="a")
     logger.info("Args: {}".format(args))
-
-    # results_folder_tracker_num = args.tn_out_path
-    # results_folder_tracker_num = str(increment_path(results_folder_tracker_num, exist_ok=False))  # 对已有的文件进行评估，需要注释
-    # os.makedirs(results_folder_tracker_num, exist_ok=True)
 
     raw_path = "{}/{}/{}/{}".format(args.raw_results_path, args.dataset, args.det_type, args.dataset_type)  # 检测路径
     dataset = args.dataset
@@ -111,8 +111,8 @@ def main(args):
         tracker = OCSort(args=args, det_thresh = args.track_thresh, iou_threshold=args.iou_thresh, asso_func=args.asso, delta_t=args.deltat, inertia=args.inertia, use_byte=args.use_byte, min_hits=args.min_hits)
 
         results_filename = os.path.join(results_data, seq_name)
-        # results_filename_tracker_num = os.path.join(results_folder_tracker_num, seq_name)
-
+        results_filename_tracker_num = os.path.join(results_folder_tracker_num, seq_name)
+        results_filename_switch = os.path.join(results_trkswitch, seq_name)
         # seq_file = os.path.join(raw_path, seq_name)
         # seq_trks = np.empty((0, 10))
         # seq_file = open(seq_file)
@@ -132,7 +132,8 @@ def main(args):
         max_frame = seq_trks[:,0].max()
         results = []
         start_row = 0
-        # results_tracker_num = []
+        results_tracker_num = []
+        results_switchs = []
         for frame_ind in range(int(min_frame), int(max_frame)+1):
             # tmp_row = start_row
             # while (tmp_row < seq_trks.shape[0] and seq_trks[tmp_row, 0] == frame_ind) or (tmp_row == seq_trks.shape[0]):
@@ -167,14 +168,21 @@ def main(args):
                     online_tlwhs.append(tlwh)
                     online_ids.append(tid)
                     # online_scores.append(score)
+
             # save results
             results.append((frame_ind, online_tlwhs, online_ids))  # 每一帧跟踪器信息: fid, x, y, w, h, tid
             # results_tracker_num.append(tracker.save_info(cur_dets))
-
+            results_tracker_num.append(tracker.save_info(cur_dets))
+            results_switchs.append(tracker.get_switch_cnt())
 
         write_results_no_score(results_filename, results)  # 将results写入到result_filename, fid, tid, x, y, w, h
-        # np.savetxt(results_filename_tracker_num, results_tracker_num, fmt="%d %d %d")
-    
+        np.savetxt(results_filename_tracker_num, results_tracker_num, fmt="%d %d %d")
+
+        with open(results_filename_switch, 'w') as f:
+            for result_switch in results_switchs:
+                for frame_id, track_id, hit_switch_cnt in result_switch:
+                    f.write("{frame_id} {track_id} {hit_switch_cnt}\n".format(frame_id=frame_id, track_id=track_id, hit_switch_cnt=hit_switch_cnt))
+        # np.savetxt(results_filename_switch, results_switchs, fmt="%d %d %d")
     track_time = 1000 * total_time / total_frame
     logger.info('track_fps: {} '.format(1000 / track_time))
     if args.dataset == "test":
@@ -185,7 +193,7 @@ def main(args):
     # else:
     #     eval(results_folder, "datasets/{}/train".format(args.dataset), args.gt_type)  # "" | "_val_half" | "_train_half"
 
-    eval_hota(results_data, args.dataset, "val")
+    eval_hota(results_data, args.dataset, "train")
     logger.info('Completed')
     # print("Running over {} frames takes {}s. FPS={}".format(total_frame, total_time, total_frame / total_time))
     return 

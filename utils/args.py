@@ -62,11 +62,11 @@ def make_parser():
         help="path to the raw tracking results from other tracks")
     # parser.add_argument('--out_path', type=str, default="evaldata/trackers/MOT20/improve/train-half/baseline+now", help="path to save output results")
     parser.add_argument('--out_path', type=str, default="evaldata/trackers", help="path to save output results") 
-    parser.add_argument("--expn", type=str, default="bamsort")
+    parser.add_argument("--expn", type=str, default="bamsort_std_lab")
     # parser.add_argument('--tn_out_path', type=str, default="evaldata/trackers/MOT20/tracker_num/val-half/baseline", help="path to save output results")
     parser.add_argument('--det_type', type=str, default="yolox_x", help="yolox_x | ablation")
     parser.add_argument("--dataset", type=str, default="dancetrack", help="MOT17| MOT20 | dancetrack | kitti | bdd")
-    parser.add_argument("--dataset_type", type=str, default="val", help="train | val | test | all")
+    parser.add_argument("--dataset_type", type=str, default="train", help="train | val | test | all")
     # parser.add_argument("--gt_type", type=str, default="", help="| _val_half | _train_half")
     parser.add_argument("--hp", action="store_true", help="use head padding to add the missing objects during \
             initializing the tracks (offline).")
