@@ -4,7 +4,7 @@
 
 
 ### Abstract
-Multiple Object Tracking (MOT) aims to estimate object bounding boxes and identities in videos. Most tracking methods jointly detect and Kalman filter (KF), using pairwise IoU distance features to match previous trajectories with current detections. Those scenes with congestion and frequent occlusions usually lead to problems of trajectory ID switching and trajectory breakage. To solve this problem, this paper proposes a simple, effective and identical correlation method. First, the bottom border cost matrix (BEC) is introduced to use depth information to improve data association and increase robustness in occlusion situations. Secondly, the activation trajectory matching strategy is adopted to reduce the interference of noise and instantaneous targets on tracking. Finally, the number of trajectory state switching times and the state stability threshold are introduced to effectively reduce the frequency of erroneous trajectories and trajectory breaks caused by false high-scoring detection frames by dynamically maintaining and deleting trajectories. These innovations have achieved excellent performance in various benchmark tests, including MOT17, MOT20, KITTI, especially on DanceTrack where interaction and occlusion phenomena are frequent and severe. Code and models are available at https://github.com/djdodsjsjx/BAM-SORT/.
+Multi-object tracking aims at estimating object bounding boxes and identity IDs in the video. Most tracking methods combine a detector and a Kalman filter using the IoU distance as a similarity metric for association matching for previous trajectories to match with the current detection box. These methods usually suffer from ID switches and fragmented trajectories in response to congested and frequently occluded scenarios. In order to solve this problem, this paper proposes a simple and effective association method. Firstly, a bottom edge cost matrix is introduced to use depth information to improve data association and increase robustness in the case of occlusion. Secondly, an activated trajectory matching strategy is introduced to reduce the interference of noise and transient objects on tracking. Finally, the trajectory deletion strategy is improved by introducing the number of trajectory state switches to delete trajectories caused by spurious high-scoring detection boxes in real time, which in turn reduces the number of fragmented trajectories. These innovations achieve excellent performance in various benchmarks, including MOT17, MOT20, and especially on DanceTrack where interactions and occlusions are frequent and severe.
 
 ### Highlights
 
@@ -15,12 +15,12 @@ Multiple Object Tracking (MOT) aims to estimate object bounding boxes and identi
 
 ### Pipeline
 <center>
-<img src="assets/Pipeline.jpg" width="1000"/>
+<img src="assets/BAM-SORT.jpg" width="1000"/>
 </center>
 
 
-
-## News
+<!-- 
+## News -->
 
 ## Tracking performance
 
@@ -68,7 +68,7 @@ python tools/bamsort_demo.py --path dancetrack0052 --det_type yolox_x --dataset 
 
 
 
-## Citation
+<!-- ## Citation
 
 If you find this work useful, please consider to cite our paper:
 ```
@@ -82,7 +82,7 @@ Also see OC-SORT, which we base our work upon:
   journal={arXiv preprint arXiv:2203.14360},
   year={2022}
 }
-```
+``` -->
 ## Acknowledgement
 A large part of the code is borrowed from [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX), [OC-SORT](https://github.com/noahcao/OC_SORT), [ByteTrack](https://github.com/ifzhang/ByteTrack), [HybridSORT](https://github.com/ymzis69/HybridSORT), [BoT-SORT](https://github.com/NirAharon/BOT-SORT), [Deep-OC-SORT](https://github.com/GerardMaggiolino/Deep-OC-SORT) and [FastReID](https://github.com/JDAI-CV/fast-reid). Many thanks for their wonderful works.
 

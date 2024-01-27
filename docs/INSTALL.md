@@ -20,7 +20,7 @@ Step3. Others
 ```shell
 pip3 install cython_bbox pandas xmltodict
 ```
-### 2. Docker build
+<!-- ### 2. Docker build
 ```shell
 docker build -t ocsort:latest .
 
@@ -39,4 +39,4 @@ docker run --gpus all -it --rm \
 -e DISPLAY=$DISPLAY \
 --privileged \
 ocsort:latest
-```
+``` -->
