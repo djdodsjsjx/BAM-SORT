@@ -2,25 +2,52 @@
 **Our data structure is the same as [OC-SORT](https://github.com/noahcao/OC_SORT).** 
 
 ## Data preparation
-1. Download [MOT17](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing), [MOT20](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing), [DanceTrack](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing) preprocessing detection frame file under detector YOLOX and put them under <BAM_HOME>/exps in the following structure:
-    ```
-    exps
-    |——————dancetrack
-    |        └——————yolox_x
-    |           └——————val
-    |           └——————test
-    |——————MOT17
-    |        └——————yolox_x
-    |           └——————test
-    |        └——————ablation
-    |           └——————val
-    |——————MOT20
-    |        └——————yolox_x
-    |           └——————test
-    ```
+### Datasets
+Download [MOT17](https://motchallenge.net/), [MOT20](https://motchallenge.net/), [CrowdHuman](https://www.crowdhuman.org/), [Cityperson](https://github.com/Zhongdao/Towards-Realtime-MOT/blob/master/DATASET_ZOO.md), [ETHZ](https://github.com/Zhongdao/Towards-Realtime-MOT/blob/master/DATASET_ZOO.md), [DanceTrack](https://github.com/DanceTrack/DanceTrack) and put them under <OCSORT_HOME>/datasets in the following structure:
+```
+datasets
+|——————MOT17
+|        └——————train
+|        └——————test
+└——————crowdhuman
+|        └——————Crowdhuman_train
+|        └——————Crowdhuman_val
+|        └——————annotation_train.odgt
+|        └——————annotation_val.odgt
+└——————MOT20
+|        └——————train
+|        └——————test
+└——————Cityscapes
+|        └——————images
+|        └——————labels_with_ids
+└——————ETHZ
+|        └——————eth01
+|        └——————...
+|        └——————eth07
+└——————dancetrack        
+        └——————train
+        └——————val
+        └——————test
+```
+### 2. YOLOX-Detection-Output
+Download [MOT17](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing), [MOT20](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing), [DanceTrack](https://drive.google.com/drive/folders/18c4Zj95PQu6KBsrY-I1ub0KpY-z1ZVAZ?usp=sharing) preprocessing detection frame file under detector YOLOX and put them under <BAM_HOME>/exps in the following structure:
+```
+exps
+|——————dancetrack
+|        └——————yolox_x
+|           └——————val
+|           └——————test
+|——————MOT17
+|        └——————yolox_x
+|           └——————test
+|        └——————ablation
+|           └——————val
+|——————MOT20
+|        └——————yolox_x
+|           └——————test
+```
 
 ## Evaluation
-
 * **on DanceTrack Val set**
     ```shell
     python tools/run_bamsort.py --det_type yolox_x --dataset dancetrack --dataset_type val --w_bec 0.3 --bec_num 4 --min_hits 7 --std_time_since_update 5 --std_switch_cnt 1 --std_max_hits 50 --fp16 --fuse --expn $exp_name 
@@ -63,3 +90,4 @@ The OC-SORT algorithm also provides an attempt to use Gaussian Process Regressio
     python tools/gp_interpolation.py $raw_results_path $linear_interp_path $save_path
 ```
 *Note: for the results in our paper on MOT17/MOT20 private settings and HeadTrack, we use linear interpolation by default.*
+
