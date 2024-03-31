@@ -20,7 +20,7 @@ from loguru import logger
 import time
 
 import sys
-sys.path.insert(0, 'D:/Code/python/DeepLearning/track/BAM-SORT/')
+sys.path.insert(0, 'F:/test/BAM-SORT')
 # from trackers.bamsort_tracker.bamsort_bec import OCSort
 from trackers.bamsort_tracker.bamsort_bec_atm_std import OCSort
 from utils.utils import write_results, write_results_no_score, write_det_results
@@ -185,7 +185,7 @@ def main(args):
         # np.savetxt(results_filename_switch, results_switchs, fmt="%d %d %d")
     track_time = 1000 * total_time / total_frame
     logger.info('track_fps: {} '.format(1000 / track_time))
-    if args.dataset == "test":
+    if args.dataset_type == "test":
         return 
 
     # if args.dataset == "dancetrack":
@@ -193,7 +193,7 @@ def main(args):
     # else:
     #     eval(results_folder, "datasets/{}/train".format(args.dataset), args.gt_type)  # "" | "_val_half" | "_train_half"
 
-    eval_hota(results_data, args.dataset, "train")
+    eval_hota(results_data, args.dataset, args.dataset_type)
     logger.info('Completed')
     # print("Running over {} frames takes {}s. FPS={}".format(total_frame, total_time, total_frame / total_time))
     return 

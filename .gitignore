@@ -147,7 +147,6 @@ dance_detections/
 results_log/
 videos/
 traj_plots/
-trackeval/
 external/
 cache/
 exps/kitti/test/
@@ -159,5 +158,5 @@ OpenNI2/
 OpenNI.ini
 OpenNI2.dll
 OpenNI2.lib
-exps/dancetrack/
+exps/dancetrack
 data_process/

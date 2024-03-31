@@ -28,7 +28,7 @@ import tempfile
 import time
 import cv2
 from utils.utils import write_results, write_results_no_score, write_det_results
-from external.fast_reid.fast_reid_interfece import FastReIDInterface
+# from external.fast_reid.fast_reid_interfece import FastReIDInterface
 import numpy as np
 
 from yolox.utils.visualize import plot_tracking, vis_notag
