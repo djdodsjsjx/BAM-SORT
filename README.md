@@ -68,21 +68,6 @@ python tools/bamsort_demo.py --path dancetrack0052 --det_type yolox_x --dataset 
 
 
 
-<!-- ## Citation
-
-If you find this work useful, please consider to cite our paper:
-```
-
-```
-Also see OC-SORT, which we base our work upon:
-```
-@article{cao2022observation,
-  title={Observation-centric sort: Rethinking sort for robust multi-object tracking},
-  author={Cao, Jinkun and Weng, Xinshuo and Khirodkar, Rawal and Pang, Jiangmiao and Kitani, Kris},
-  journal={arXiv preprint arXiv:2203.14360},
-  year={2022}
-}
-``` -->
 ## Acknowledgement
 A large part of the code is borrowed from [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX), [OC-SORT](https://github.com/noahcao/OC_SORT), [ByteTrack](https://github.com/ifzhang/ByteTrack), [HybridSORT](https://github.com/ymzis69/HybridSORT), [BoT-SORT](https://github.com/NirAharon/BOT-SORT), [Deep-OC-SORT](https://github.com/GerardMaggiolino/Deep-OC-SORT) and [FastReID](https://github.com/JDAI-CV/fast-reid). Many thanks for their wonderful works.
 
