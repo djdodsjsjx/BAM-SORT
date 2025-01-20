@@ -71,3 +71,17 @@ python tools/bamsort_demo.py --path dancetrack0052 --det_type yolox_x --dataset 
 ## Acknowledgement
 A large part of the code is borrowed from [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX), [OC-SORT](https://github.com/noahcao/OC_SORT), [ByteTrack](https://github.com/ifzhang/ByteTrack), [HybridSORT](https://github.com/ymzis69/HybridSORT), [BoT-SORT](https://github.com/NirAharon/BOT-SORT), [Deep-OC-SORT](https://github.com/GerardMaggiolino/Deep-OC-SORT) and [FastReID](https://github.com/JDAI-CV/fast-reid). Many thanks for their wonderful works.
 
+If you find this work useful, please consider to cite our paper:
+```shell
+@Article{Chao2025,
+    title={BAM-SORT: border-guided activated matching for online multi-object tracking},
+    author={Chao, Yuan and Zhu, Huaiyang and Lu, Hengyu},
+    journal={Applied Intelligence},
+    year={2025},
+    month={Jan},
+    day={20},
+    volume={55},
+    number={5},
+    pages={351},
+}
+```
